@@ -2,17 +2,36 @@ import asyncio
 import subprocess
 import tempfile
 from pathlib import Path
-from prompt_toolkit.shortcuts import input_dialog
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, HSplit, Float, FloatContainer, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.widgets import TextArea, Frame, Dialog, Button
 from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers import PythonLexer, JavascriptLexer, HtmlLexer, BashLexer, CLexer, CppLexer
+from pygments.lexers import PythonLexer, JavascriptLexer, HtmlLexer, BashLexer, JavaLexer
 from pygments.styles import get_style_by_name
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
+from prompt_toolkit import PromptSession
+import re
+import os
 
+all_themes = [
+    "abap","algol","algol_nu","arduino","autumn","bw","borland","coffee","colorful",
+    "default","dracula","emacs","friendly_grayscale","friendly","fruity","github-dark",
+    "gruvbox-dark","gruvbox-light","igor","inkpot","lightbulb","lilypond","lovelace",
+    "manni","material","monokai","murphy","native","nord-darker","nord","one-dark",
+    "paraiso-dark","paraiso-light","pastie","perldoc","rainbow_dash","rrt","sas",
+    "solarized-dark","solarized-light","staroffice","stata-dark","stata-light","tango",
+    "trac","vim","vs","xcode","zenburn"
+]
+
+my_themes = [
+    "coffee","dracula","github-dark","gruvbox-dark","lightbulb","material",
+    "nord-darker","paraiso-dark","zenburn"
+]
+
+
+theme_index = 0 
 status_message = ""
 current_file = None
 syntax_on = True
@@ -23,16 +42,14 @@ def get_lexer(path: Path):
     ext = path.suffix.lower()
     if ext == ".py":
         return PygmentsLexer(PythonLexer)
-    elif ext in {".js"}:
+    elif ext == ".js":
         return PygmentsLexer(JavascriptLexer)
+    elif ext == ".java":
+        return PygmentsLexer(JavaLexer)
     elif ext in {".html", ".htm"}:
         return PygmentsLexer(HtmlLexer)
     elif ext == ".sh":
         return PygmentsLexer(BashLexer)
-    elif ext == ".c":
-        return PygmentsLexer(CLexer)
-    elif ext == ".cpp":
-        return PygmentsLexer(CppLexer)
     else:
         return None
 
@@ -42,10 +59,8 @@ def get_style_for_file(path: Path):
         return style_from_pygments_cls(get_style_by_name("material"))
     elif ext == ".sh":
         return style_from_pygments_cls(get_style_by_name("coffee"))
-    elif ext in {".c", ".cpp"}:
-        return style_from_pygments_cls(get_style_by_name("lightbulb"))
     else:
-        return style_from_pygments_cls(get_style_by_name("lightbulb"))
+        return style_from_pygments_cls(get_style_by_name("zenburn"))
 
 def main():
     global current_file, status_message, syntax_on, opened_files, file_index, editor, root_container, app
@@ -95,7 +110,6 @@ def main():
         status_message = ""
         app.invalidate()
 
-    # Ctrl+S save
     @kb.add("c-s")
     def _(event):
         global status_message
@@ -109,16 +123,13 @@ def main():
             app.invalidate()
             asyncio.get_event_loop().call_later(2, clear_status)
 
-    # Ctrl+F fancy popup file opener
     @kb.add("c-f")
     def _(event):
         input_box = TextArea(height=1)
 
         def ok_handler():
             global current_file, editor, opened_files, file_index, syntax_on
-            name = input_dialog(title="Open File", text="Enter File name: ").run()
-            if name:
-                name = name.strip()
+            name = input_box.text.strip()
             if not name:
                 return
             p = Path(name)
@@ -146,12 +157,20 @@ def main():
                 root_container.floats.remove(file_float)
             app.layout.focus(editor)
 
+        def cancel_handler():
+            if file_float in root_container.floats:
+                root_container.floats.remove(file_float)
+            app.layout.focus(editor)
+
         input_box.accept_handler = lambda buff: ok_handler()
 
         dialog = Dialog(
             title="Open File",
             body=input_box,
-            buttons=[Button(text="OK", handler=ok_handler)],
+            buttons=[
+                Button(text="OK", handler=ok_handler),
+                Button(text="Cancel", handler=cancel_handler)
+            ],
             width=40,
             modal=True
         )
@@ -160,19 +179,32 @@ def main():
         root_container.floats.append(file_float)
         app.layout.focus(input_box)
 
-    # Ctrl+Q quit without saving
     @kb.add("c-q")
     def _(event):
         event.app.exit()
 
-    # Ctrl+C toggle syntax highlighting
-    @kb.add("c-c")
+    @kb.add("c-b")
     def _(event):
-        global syntax_on
-        syntax_on = not syntax_on
-        editor.lexer = get_lexer(current_file) if syntax_on else None
+        async def shell_loop():
+            os.system("clear")
+            shell_session = PromptSession("> ")
+            try:
+                while True:
+                    try:
+                        command = await shell_session.prompt_async()
+                        if command.strip() in {"exit", "quit"}:
+                            break
+                        subprocess.run(command, shell=True)
+                    except KeyboardInterrupt:
+                        continue
+                    except EOFError:
+                        break
+            finally:
+                os.system("clear")
+                app.invalidate()
 
-    # Ctrl+Z cycle through opened files
+        asyncio.ensure_future(shell_loop())
+
     @kb.add("c-z")
     def _(event):
         global file_index, current_file
@@ -188,45 +220,70 @@ def main():
         editor.lexer = get_lexer(current_file) if syntax_on else None
         app.style = get_style_for_file(current_file)
 
-    # Ctrl+R run code
     @kb.add("c-r")
     def _(event):
         ext = current_file.suffix.lower()
-        with tempfile.NamedTemporaryFile("w+", suffix=ext, delete=False) as tmp:
-            tmp.write(editor.text)
-            tmp.flush()
-            tmp_name = tmp.name
-
         cmd = None
-        if ext == ".py":
-            cmd = ["python", tmp_name]
-        elif ext == ".c":
-            exe = tmp_name + "_out"
-            compile_proc = subprocess.run(["gcc", tmp_name, "-o", exe], capture_output=True, text=True)
+
+        if ext in {".py", ".js"}:
+            with tempfile.NamedTemporaryFile("w+", suffix=ext, delete=False) as tmp:
+                tmp.write(editor.text)
+                tmp.flush()
+                tmp_name = tmp.name
+            if ext == ".py":
+                cmd = ["python", tmp_name]
+            elif ext == ".js":
+                cmd = ["node", tmp_name]
+
+        elif ext == ".java":
+            match = re.search(r'public\s+class\s+(\w+)', editor.text)
+            cls_name = match.group(1) if match else "Main"
+
+            tmp_dir = tempfile.gettempdir()
+            tmp_name = os.path.join(tmp_dir, f"{cls_name}.java")
+            with open(tmp_name, "w", encoding="utf-8") as f:
+                f.write(editor.text)
+
+            compile_proc = subprocess.run(["javac", tmp_name], capture_output=True, text=True)
             if compile_proc.returncode != 0:
                 output_area.text = compile_proc.stderr
                 return
-            cmd = [exe]
-        elif ext == ".cpp":
-            exe = tmp_name + "_out"
-            compile_proc = subprocess.run(["g++", tmp_name, "-o", exe], capture_output=True, text=True)
-            if compile_proc.returncode != 0:
-                output_area.text = compile_proc.stderr
-                return
-            cmd = [exe]
-        elif ext == ".js":
-            cmd = ["node", tmp_name]
+            cmd = ["java", cls_name]
+
         else:
             output_area.text = "Cannot run this file type."
             return
 
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True)
+            proc = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(tmp_name))
             output_area.text = proc.stdout + proc.stderr
         except Exception as e:
             output_area.text = str(e)
 
-    # Status bar
+
+    @kb.add("c-x")
+    def _(event):
+        global theme_index
+        global app, status_message
+        theme_index = (theme_index + 1) % len(all_themes)
+        theme_name = all_themes[theme_index]
+        try:
+            app.style = style_from_pygments_cls(get_style_by_name(theme_name))
+            status_message = f"'{theme_name}'"
+        except Exception:
+            status_message = f"Theme {theme_name} not available"
+        app.invalidate()
+        asyncio.get_event_loop().call_later(2, clear_status)
+
+    @kb.add("c-c")
+    def _(event):
+        global syntax_on, editor, status_message
+        syntax_on = not syntax_on
+        editor.lexer = get_lexer(current_file) if syntax_on else None
+        status_message = "Syntax highlighting ON" if syntax_on else "Syntax highlighting OFF"
+        app.invalidate()
+        asyncio.get_event_loop().call_later(2, clear_status)
+
     def status_bar_text():
         d = editor.buffer.document
         msg = f" {current_file}  Ln {d.cursor_position_row+1}  Col {d.cursor_position_col+1} "
