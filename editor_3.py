@@ -8,9 +8,13 @@ from prompt_toolkit.layout import Layout, HSplit, Float, FloatContainer, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.widgets import TextArea, Frame, Dialog, Button
 from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers import PythonLexer, JavascriptLexer, HtmlLexer, BashLexer, CLexer, CppLexer
+from pygments.lexers import PythonLexer, JavascriptLexer, HtmlLexer, BashLexer
 from pygments.styles import get_style_by_name
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
+from prompt_toolkit import PromptSession
+from prompt_toolkit.patch_stdout import patch_stdout
+import re
+import os
 
 status_message = ""
 current_file = None
@@ -28,10 +32,6 @@ def get_lexer(path: Path):
         return PygmentsLexer(HtmlLexer)
     elif ext == ".sh":
         return PygmentsLexer(BashLexer)
-    elif ext == ".c":
-        return PygmentsLexer(CLexer)
-    elif ext == ".cpp":
-        return PygmentsLexer(CppLexer)
     else:
         return None
 
@@ -41,8 +41,6 @@ def get_style_for_file(path: Path):
         return style_from_pygments_cls(get_style_by_name("material"))
     elif ext == ".sh":
         return style_from_pygments_cls(get_style_by_name("coffee"))
-    elif ext in {".c", ".cpp"}:
-        return style_from_pygments_cls(get_style_by_name("lightbulb"))
     else:
         return style_from_pygments_cls(get_style_by_name("lightbulb"))
 
@@ -135,7 +133,7 @@ def main():
             else:
                 file_index = opened_files.index(p)
             syntax_on = True
-            editor.lexer = get_lexer(p)  # apply syntax highlighting immediately
+            editor.lexer = get_lexer(p)
             app.style = get_style_for_file(p)
             if file_float in root_container.floats:
                 root_container.floats.remove(file_float)
@@ -169,9 +167,25 @@ def main():
 
     @kb.add("c-c")
     def _(event):
-        global syntax_on
-        syntax_on = not syntax_on
-        editor.lexer = get_lexer(current_file) if syntax_on else None
+        async def shell_loop():
+            os.system("clear")
+            shell_session = PromptSession("> ")
+            try:
+                while True:
+                    try:
+                        command = await shell_session.prompt_async()
+                        if command.strip() in {"exit", "quit"}:
+                            break
+                        subprocess.run(command, shell=True)
+                    except KeyboardInterrupt:
+                        continue
+                    except EOFError:
+                        break
+            finally:
+                os.system("clear")
+                app.invalidate()
+
+        asyncio.ensure_future(shell_loop())
 
     @kb.add("c-z")
     def _(event):
@@ -191,36 +205,39 @@ def main():
     @kb.add("c-r")
     def _(event):
         ext = current_file.suffix.lower()
-        with tempfile.NamedTemporaryFile("w+", suffix=ext, delete=False) as tmp:
-            tmp.write(editor.text)
-            tmp.flush()
-            tmp_name = tmp.name
-
         cmd = None
-        if ext == ".py":
-            cmd = ["python", tmp_name]
-        elif ext == ".c":
-            exe = tmp_name + "_out"
-            compile_proc = subprocess.run(["gcc", tmp_name, "-o", exe], capture_output=True, text=True)
+
+        if ext in {".py", ".js"}:
+            with tempfile.NamedTemporaryFile("w+", suffix=ext, delete=False) as tmp:
+                tmp.write(editor.text)
+                tmp.flush()
+                tmp_name = tmp.name
+            if ext == ".py":
+                cmd = ["python", tmp_name]
+            elif ext == ".js":
+                cmd = ["node", tmp_name]
+
+        elif ext == ".java":
+            match = re.search(r'public\s+class\s+(\w+)', editor.text)
+            cls_name = match.group(1) if match else "Main"
+
+            tmp_dir = tempfile.gettempdir()
+            tmp_name = os.path.join(tmp_dir, f"{cls_name}.java")
+            with open(tmp_name, "w", encoding="utf-8") as f:
+                f.write(editor.text)
+
+            compile_proc = subprocess.run(["javac", tmp_name], capture_output=True, text=True)
             if compile_proc.returncode != 0:
                 output_area.text = compile_proc.stderr
                 return
-            cmd = [exe]
-        elif ext == ".cpp":
-            exe = tmp_name + "_out"
-            compile_proc = subprocess.run(["g++", tmp_name, "-o", exe], capture_output=True, text=True)
-            if compile_proc.returncode != 0:
-                output_area.text = compile_proc.stderr
-                return
-            cmd = [exe]
-        elif ext == ".js":
-            cmd = ["node", tmp_name]
+            cmd = ["java", cls_name]
+
         else:
             output_area.text = "Cannot run this file type."
             return
 
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True)
+            proc = subprocess.run(cmd, capture_output=True, text=True, cwd=os.path.dirname(tmp_name))
             output_area.text = proc.stdout + proc.stderr
         except Exception as e:
             output_area.text = str(e)
@@ -252,3 +269,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
