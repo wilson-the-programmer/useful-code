@@ -110,6 +110,10 @@ def main():
         status_message = ""
         app.invalidate()
 
+    @kb.add("c-space")
+    def _(event):
+        event.app.current_buffer.insert_text("    ")
+
     @kb.add("c-s")
     def _(event):
         global status_message
@@ -222,6 +226,18 @@ def main():
 
     @kb.add("c-r")
     def _(event):
+        #global status_message
+        blocking_words = ["input", "scanf", "cin", "read"]
+        if any(word in editor.text for word in blocking_words):
+            #status_message = "Unable to execute."
+            #app.invalidate()
+            #asyncio.get_event_loop().call_later(2, lambda : clear_status())
+            output_area.text = ""
+            output_area.text = "Unable to execute code that uses.\n input(), scanf(), cin >> , etc.\n Use Control + b to open Bash Shell\n and then run from there.\n You will have to save first though."
+
+            return
+
+
         ext = current_file.suffix.lower()
         cmd = None
 
@@ -286,7 +302,7 @@ def main():
 
     def status_bar_text():
         d = editor.buffer.document
-        msg = f" {current_file}  Ln {d.cursor_position_row+1}  Col {d.cursor_position_col+1} "
+        msg = f" {current_file}  Ln {d.cursor_position_row+1}  Col {d.cursor_position_col} "
         if status_message:
             msg += f" | {status_message}"
         return [("class:status", msg)]
