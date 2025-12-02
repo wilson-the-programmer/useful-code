@@ -31,6 +31,7 @@ my_themes = [
 ]
 
 
+
 theme_index = 0 
 status_message = ""
 current_file = None
@@ -87,7 +88,7 @@ def main():
     editor = TextArea(
         text=text,
         lexer=get_lexer(current_file),
-        scrollbar=True,
+        scrollbar=False,
         line_numbers=True,
         wrap_lines=True,
         focus_on_click=True
@@ -99,7 +100,7 @@ def main():
         wrap_lines=True,
         focus_on_click=True,
         read_only=False,
-        style="bg:black fg:ansiyellow bold"
+        style="bg:#008040 fg:white bold"
     )
 
     kb = KeyBindings()
@@ -113,6 +114,58 @@ def main():
     @kb.add("c-space")
     def _(event):
         event.app.current_buffer.insert_text("    ")
+
+
+    @kb.add("c-k")
+    def _(event):
+        global file_index, current_file, opened_files, editor
+        if not opened_files:
+            return
+
+        def close_file():
+            global file_index
+            closed_file = opened_files.pop(file_index)
+            if opened_files:
+                file_index = file_index % len(opened_files)
+                current_file = opened_files[file_index]
+                if current_file.exists():
+                    try:
+                        editor.text = current_file.read_text(encoding="utf-8")
+                    except:
+                        editor.text = ""
+                editor.lexer = get_lexer(current_file) if syntax_on else None
+                app.style = get_style_for_file(current_file)
+            else:
+                # No files left: exit the program
+                event.app.exit()
+                return
+
+            if confirm_float in root_container.floats:
+                root_container.floats.remove(confirm_float)
+            app.layout.focus(editor)
+
+        def cancel_close():
+            if confirm_float in root_container.floats:
+                root_container.floats.remove(confirm_float)
+            app.layout.focus(editor)
+
+        dialog = Dialog(
+            title="Close Current File?",
+            body=TextArea(text="", height=1, read_only=True),
+            buttons=[
+                Button(text="Yes", handler=close_file),
+                Button(text="No", handler=cancel_close)
+            ],
+            width=40,
+            modal=True
+        )
+
+        confirm_float = Float(content=dialog)
+        root_container.floats.append(confirm_float)
+        app.layout.focus(dialog)
+
+
+
 
     @kb.add("c-s")
     def _(event):
