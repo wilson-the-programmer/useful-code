@@ -96,11 +96,11 @@ def main():
 
     output_area = TextArea(
         text="",
-        height=5,
+        height=4,
         wrap_lines=True,
         focus_on_click=True,
         read_only=False,
-        style="bg:#008040 fg:white bold"
+        style="bg:black fg:beige bold"
     )
 
     kb = KeyBindings()
@@ -239,29 +239,7 @@ def main():
     @kb.add("c-q")
     def _(event):
         event.app.exit()
-
-    @kb.add("c-b")
-    def _(event):
-        async def shell_loop():
-            os.system("clear")
-            shell_session = PromptSession("> ")
-            try:
-                while True:
-                    try:
-                        command = await shell_session.prompt_async()
-                        if command.strip() in {"exit", "quit"}:
-                            break
-                        subprocess.run(command, shell=True)
-                    except KeyboardInterrupt:
-                        continue
-                    except EOFError:
-                        break
-            finally:
-                os.system("clear")
-                app.invalidate()
-
-        asyncio.ensure_future(shell_loop())
-
+    
     @kb.add("c-z")
     def _(event):
         global file_index, current_file
@@ -280,13 +258,13 @@ def main():
     @kb.add("c-r")
     def _(event):
         #global status_message
-        blocking_words = ["input", "scanf", "cin", "read"]
+        blocking_words = ["input", "scanf", "cin", "read", "run", "prompt"]
         if any(word in editor.text for word in blocking_words):
             #status_message = "Unable to execute."
             #app.invalidate()
             #asyncio.get_event_loop().call_later(2, lambda : clear_status())
             output_area.text = ""
-            output_area.text = "Unable to execute code that uses.\n input(), scanf(), cin >> , etc.\n Use Control + b to open Bash Shell\n and then run from there.\n You will have to save first though."
+            output_area.text = "Unable to execute code that uses.\n input(), scanf(), cin >> , etc."
 
             return
 
