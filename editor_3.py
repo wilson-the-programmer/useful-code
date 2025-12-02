@@ -8,14 +8,30 @@ from prompt_toolkit.layout import Layout, HSplit, Float, FloatContainer, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.widgets import TextArea, Frame, Dialog, Button
 from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers import PythonLexer, JavascriptLexer, HtmlLexer, BashLexer
+from pygments.lexers import PythonLexer, JavascriptLexer, HtmlLexer, BashLexer, JavaLexer
 from pygments.styles import get_style_by_name
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
 from prompt_toolkit import PromptSession
-from prompt_toolkit.patch_stdout import patch_stdout
 import re
 import os
 
+all_themes = [
+    "abap","algol","algol_nu","arduino","autumn","bw","borland","coffee","colorful",
+    "default","dracula","emacs","friendly_grayscale","friendly","fruity","github-dark",
+    "gruvbox-dark","gruvbox-light","igor","inkpot","lightbulb","lilypond","lovelace",
+    "manni","material","monokai","murphy","native","nord-darker","nord","one-dark",
+    "paraiso-dark","paraiso-light","pastie","perldoc","rainbow_dash","rrt","sas",
+    "solarized-dark","solarized-light","staroffice","stata-dark","stata-light","tango",
+    "trac","vim","vs","xcode","zenburn"
+]
+
+my_themes = [
+    "coffee","dracula","github-dark","gruvbox-dark","lightbulb","material",
+    "nord-darker","paraiso-dark","zenburn"
+]
+
+
+theme_index = 0 
 status_message = ""
 current_file = None
 syntax_on = True
@@ -26,8 +42,10 @@ def get_lexer(path: Path):
     ext = path.suffix.lower()
     if ext == ".py":
         return PygmentsLexer(PythonLexer)
-    elif ext in {".js"}:
+    elif ext == ".js":
         return PygmentsLexer(JavascriptLexer)
+    elif ext == ".java":
+        return PygmentsLexer(JavaLexer)
     elif ext in {".html", ".htm"}:
         return PygmentsLexer(HtmlLexer)
     elif ext == ".sh":
@@ -42,7 +60,7 @@ def get_style_for_file(path: Path):
     elif ext == ".sh":
         return style_from_pygments_cls(get_style_by_name("coffee"))
     else:
-        return style_from_pygments_cls(get_style_by_name("lightbulb"))
+        return style_from_pygments_cls(get_style_by_name("zenburn"))
 
 def main():
     global current_file, status_message, syntax_on, opened_files, file_index, editor, root_container, app
@@ -91,6 +109,10 @@ def main():
         global status_message
         status_message = ""
         app.invalidate()
+
+    @kb.add("c-space")
+    def _(event):
+        event.app.current_buffer.insert_text("    ")
 
     @kb.add("c-s")
     def _(event):
@@ -165,7 +187,7 @@ def main():
     def _(event):
         event.app.exit()
 
-    @kb.add("c-c")
+    @kb.add("c-b")
     def _(event):
         async def shell_loop():
             os.system("clear")
@@ -204,6 +226,18 @@ def main():
 
     @kb.add("c-r")
     def _(event):
+        #global status_message
+        blocking_words = ["input", "scanf", "cin", "read"]
+        if any(word in editor.text for word in blocking_words):
+            #status_message = "Unable to execute."
+            #app.invalidate()
+            #asyncio.get_event_loop().call_later(2, lambda : clear_status())
+            output_area.text = ""
+            output_area.text = "Unable to execute code that uses.\n input(), scanf(), cin >> , etc.\n Use Control + b to open Bash Shell\n and then run from there.\n You will have to save first though."
+
+            return
+
+
         ext = current_file.suffix.lower()
         cmd = None
 
@@ -242,9 +276,33 @@ def main():
         except Exception as e:
             output_area.text = str(e)
 
+
+    @kb.add("c-x")
+    def _(event):
+        global theme_index
+        global app, status_message
+        theme_index = (theme_index + 1) % len(all_themes)
+        theme_name = all_themes[theme_index]
+        try:
+            app.style = style_from_pygments_cls(get_style_by_name(theme_name))
+            status_message = f"'{theme_name}'"
+        except Exception:
+            status_message = f"Theme {theme_name} not available"
+        app.invalidate()
+        asyncio.get_event_loop().call_later(2, clear_status)
+
+    @kb.add("c-c")
+    def _(event):
+        global syntax_on, editor, status_message
+        syntax_on = not syntax_on
+        editor.lexer = get_lexer(current_file) if syntax_on else None
+        status_message = "Syntax highlighting ON" if syntax_on else "Syntax highlighting OFF"
+        app.invalidate()
+        asyncio.get_event_loop().call_later(2, clear_status)
+
     def status_bar_text():
         d = editor.buffer.document
-        msg = f" {current_file}  Ln {d.cursor_position_row+1}  Col {d.cursor_position_col+1} "
+        msg = f" {current_file}  Ln {d.cursor_position_row+1}  Col {d.cursor_position_col} "
         if status_message:
             msg += f" | {status_message}"
         return [("class:status", msg)]
@@ -269,4 +327,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
