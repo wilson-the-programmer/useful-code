@@ -1,7 +1,8 @@
 #!/bin/env bash
 export DIALOGRC=$(mktemp)
 cat <<EOF > $DIALOGRC
-# Set dialog default colors                        screen_color = (WHITE,BLACK,ON)
+# Set dialog default colors                        
+screen_color = (WHITE,BLACK,ON)
 title_color  = (WHITE,BLUE,ON)
 shadow_color = (BLACK,BLACK,OFF)
 border_color = (WHITE,BLACK,ON)
