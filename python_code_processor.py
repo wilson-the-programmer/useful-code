@@ -3,20 +3,54 @@ import re
 import time
 from collections import defaultdict
 from halo import Halo
+import sys
+
+RESET = "\033[0m"
+WHITE = "\033[1;38;2;255;255;255m"
+YELLOW = "\033[1;38;2;255;255;0m"
+ORANGE = "\033[1;38;2;255;165;0m"
+CYAN = "\033[1;38;2;0;255;255m"
+GREEN = "\033[1;38;2;0;255;0m"
+RED = "\033[1;38;2;255;0;0m"
+MAGENTA = "\033[1;38;2;255;0;255m"
+BLUE = "\033[1;38;2;0;0;255m"
+BEIGE = "\033[1;38;2;245;245;220m"
+LIGHT_PINK = "\033[1;38;2;255;182;193m"
+LIGHT_ORANGE = "\033[1;38;2;255;200;100m"
+LIME = "\033[1;38;2;191;255;0m"
+TURQUOISE = "\033[1;38;2;64;224;208m"
+
+def ghost_type(text, delay=0.03, color_code=f"{CYAN}"):
+    reset_code = "\033[0m"
+    for char in text:
+        sys.stdout.write(f"{color_code}{char}{reset_code}")
+        sys.stdout.flush()
+        time.sleep(delay)
+    print()
 
 try:
-    file = input("\nFile: ").strip()
-    lint_output = f"{file}_lint_msg.txt"
+    file = input(f"\n{ORANGE}File: {CYAN}").strip()
+
+    if not os.path.isfile(file):
+        ghost_type(f"\n\n{RED}The file{YELLOW} '{file}'{RED} does not exist.\n\n")
+        time.sleep(1)
+        ghost_type(f"{YELLOW}Okay...Well have a good day!\n\n")
+        time.sleep(1)
+        sys.exit()
+
+    lint_output = "lint_analysis.txt"
 
     time.sleep(1)
-    os.system('printf "\\n\\nSeveral processes occurring.\\n\\nPlease be patient.\\n\\nNote: The longer the file the longer this is going to take. This could take anywhere from 10 seconds to 2 minutes.\\n\\n⏰🕛\\n\\n"')
+    ghost_type(
+        "\n\nSeveral processes occurring.\n\n"
+        "Please be patient.\n\n"
+        "Note: The longer the file the longer this is going to take.\n\n⏰🕛\n\n"
+    )
     time.sleep(1)
 
-    spinner = Halo(text=' ', spinner='dots')
+    spinner = Halo(text="  ", spinner="dots")
     spinner.start()
 
-    os.system(f"black {file}")
-    os.system(f"printf '\n\n'")
     os.system(f"pylint {file} > {lint_output}")
 
     spinner.stop()
@@ -24,7 +58,6 @@ try:
     with open(lint_output, "r") as f:
         lines = f.readlines()
 
-    filename = None
     issues = defaultdict(list)
     code_score = None
 
@@ -38,7 +71,6 @@ try:
         if ":" in line and "(" in line:
             match = re.match(r"(.+?):(\d+):\d+:\s+[A-Z]\d+:\s+(.*?)\s+\((.*?)\)", line)
             if match:
-                filename = match.group(1)
                 line_number = int(match.group(2))
                 message = match.group(3).strip()
                 symbol = match.group(4).strip()
@@ -47,9 +79,7 @@ try:
     sorted_lines = sorted(issues.keys())
 
     output = []
-
-    if filename:
-        output.append(f"File '{filename}'\n")
+    output.append(f"File: '{file}'\n")
 
     for num in sorted_lines:
         output.append(f"\nLine {num}:\n")
@@ -62,17 +92,23 @@ try:
     with open(lint_output, "w") as f:
         f.write("\n".join(output))
 
-    os.system(f'printf "\\n\\nAll Done! ✨ 🍰\\n\\n    \'{lint_output}\' ready to read.\\n\\n"')
+    ghost_type(f"\n\nAll Done! ✨ 🍰\n\n    '{lint_output}' ready to read.\n\n")
 
     time.sleep(1.5)
-    read_file = input(f"\n\nDo you want to read '{lint_output}'?\n\n    1) Yes\n    2) No\n\n").strip().lower()
+    read_file = (
+        input(
+            f"\n\n{ORANGE}Do you want to read {CYAN}'{lint_output}'?{WHITE}\n\n    1) Yes\n    2) No\n\n"
+        )
+        .strip()
+        .lower()
+    )
 
-    if read_file in ['1', 'yes', 'y']:
+    if read_file in ["1", "yes", "y"]:
+        os.system(f"printf '\n\n{BEIGE}'")
         os.system(f"cat {lint_output}")
     else:
-        os.system('printf "\\n\\nOkay...Well have a good day!\\n\\n"')
+        ghost_type("\n\nOkay...Well have a good day!\n\n")
         time.sleep(1)
 
 except Exception as e:
-    print(f"\n\n{e}\n\n")
-
+    ghost_type(f"\n\n{e}\n\n")
