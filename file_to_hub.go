@@ -1,3 +1,5 @@
+// file uploader
+
 package main
 
 import (
@@ -16,6 +18,7 @@ func pause(seconds time.Duration) {
     time.Sleep(seconds * time.Second)
 }
 
+// githubUpload uploads or updates a file safely
 func githubUpload(username, token, repo, branch, file, commitMsg string) error {
     pause(1)
     fmt.Printf("📄 Reading file: %s\n", file)
@@ -28,30 +31,56 @@ func githubUpload(username, token, repo, branch, file, commitMsg string) error {
     fmt.Println("🔑 Encoding content...")
     encoded := base64.StdEncoding.EncodeToString(content)
 
+    url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s?ref=%s", username, repo, file, branch)
+    req, _ := http.NewRequest("GET", url, nil)
+    req.SetBasicAuth(username, token)
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    var sha string
+    if err == nil && resp.StatusCode == 200 {
+        // File exists, get sha
+        var result map[string]interface{}
+        body, _ := ioutil.ReadAll(resp.Body)
+        json.Unmarshal(body, &result)
+        if s, ok := result["sha"].(string); ok {
+            sha = s
+        }
+    }
+    if resp != nil {
+        resp.Body.Close()
+    }
+
+    // Use default commit message if blank
+    if commitMsg == "" {
+        commitMsg = "Update file"
+    }
+
     payload := map[string]string{
         "message": commitMsg,
         "content": encoded,
         "branch":  branch,
     }
-    data, _ := json.Marshal(payload)
+    if sha != "" {
+        payload["sha"] = sha
+    }
 
-    url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", username, repo, file)
-    req, _ := http.NewRequest("PUT", url, strings.NewReader(string(data)))
-    req.SetBasicAuth(username, token)
-    req.Header.Set("Accept", "application/vnd.github+json")
+    data, _ := json.Marshal(payload)
+    reqPut, _ := http.NewRequest("PUT",
+        fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", username, repo, file),
+        strings.NewReader(string(data)))
+    reqPut.SetBasicAuth(username, token)
+    reqPut.Header.Set("Accept", "application/vnd.github+json")
 
     pause(1)
     fmt.Println("🚀 Uploading file to GitHub...")
-    client := &http.Client{}
-    resp, err := client.Do(req)
+    respPut, err := client.Do(reqPut)
     if err != nil {
         return err
     }
-    defer resp.Body.Close()
+    defer respPut.Body.Close()
 
-    body, _ := ioutil.ReadAll(resp.Body)
-
-    if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+    body, _ := ioutil.ReadAll(respPut.Body)
+    if respPut.StatusCode >= 200 && respPut.StatusCode < 300 {
         fmt.Printf("✅ Upload successful: %s\n", file)
     } else {
         fmt.Printf("❌ Upload failed for %s:\n%s\n", file, string(body))
@@ -81,6 +110,7 @@ func main() {
     fmt.Print("🌿 Branch (main/master): ")
     branch, _ := reader.ReadString('\n')
     branch = strings.TrimSpace(branch)
+
     branchLower := strings.ToLower(branch)
     if branchLower != "main" && branchLower != "master" {
         branch = "main"
@@ -98,7 +128,6 @@ func main() {
     pause(1)
     fmt.Println("\n⚡ Starting upload...")
 
-    // Split input by commas or spaces
     files := strings.FieldsFunc(fileInput, func(r rune) bool {
         return r == ',' || r == ' '
     })
