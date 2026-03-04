@@ -22,7 +22,16 @@ from prompt_toolkit.widgets import TextArea, Frame, Dialog, Button
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.styles import Style, merge_styles
 from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers import PythonLexer, GoLexer
+from pygments.lexers import (
+    BashLexer,
+    CLexer,
+    GoLexer,
+    RustLexer,
+    PythonLexer,
+    CppLexer,
+    JavascriptLexer,
+    HtmlLexer
+)
 from pygments.styles import get_style_by_name
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
 
@@ -37,7 +46,59 @@ floats = []
 
 syntax_enabled = True
 
-all_themes = ["material", "lightbulb", "zenburn", "dracula", "coffee"]
+all_themes = [
+    "abap",
+    "algol",
+    "algol_nu",
+    "arduino",
+    "autumn",
+    "bw",
+    "borland",
+    "coffee",
+    "colorful",
+    "default",
+    "dracula",
+    "emacs",
+    "friendly_grayscale",
+    "friendly",
+    "fruity",
+    "github-dark",
+    "gruvbox-dark",
+    "gruvbox-light",
+    "igor",
+    "inkpot",
+    "lightbulb",
+    "lilypond",
+    "lovelace",
+    "manni",
+    "material",
+    "monokai",
+    "murphy",
+    "native",
+    "nord-darker",
+    "nord",
+    "one-dark",
+    "paraiso-dark",
+    "paraiso-light",
+    "pastie",
+    "perldoc",
+    "rainbow_dash",
+    "rrt",
+    "sas",
+    "solarized-dark",
+    "solarized-light",
+    "staroffice",
+    "stata-dark",
+    "stata-light",
+    "tango",
+    "trac",
+    "vim",
+    "vs",
+    "xcode",
+    "zenburn"
+]
+
+
 
 key_guide = """
 Control a : Go to beginning of the line
@@ -66,7 +127,7 @@ Control _ : Clear active editor
 Control space : Insert indent
 """
 
-current_theme_index = 3
+current_theme_index = 25 #'material'
 
 WHITE = "\033[1;37m"
 YELLOW = "\033[1;33m"
@@ -93,7 +154,7 @@ def save_file(path, content):
 
 
 def get_theme_style():
-    return style_from_pygments_cls(get_style_by_name(all_themes[current_theme_index]))
+    return style_from_pygments_cls(get_style_by_name("material"))
 
 
 # -----------------------
@@ -111,12 +172,29 @@ style = merge_styles([get_theme_style(), base_style])
 
 
 def get_lexer():
-    if not syntax_enabled:
+    if current_file.endswith(".txt"):
         return None
-    if current_file.endswith(".py"):
-        return PygmentsLexer(PythonLexer)
-    else:
+
+    if current_file.endswith(".sh"):
+        return PygmentsLexer(BashLexer)
+    elif current_file.endswith(".c"):
+        return PygmentsLexer(CLexer)
+    elif current_file.endswith(".go"):
         return PygmentsLexer(GoLexer)
+    elif current_file.endswith(".rs"):
+        return PygmentsLexer(RustLexer)
+    elif current_file.endswith(".py"):
+        return PygmentsLexer(PythonLexer)
+    elif current_file.endswith(".cpp") or current_file.endswith(".cc") or current_file.endswith(".cxx"):
+        return PygmentsLexer(CppLexer)
+    elif current_file.endswith(".js"):
+        return PygmentsLexer(JavascriptLexer)
+    elif current_file.endswith(".html") or current_file.endswith(".htm"):
+        return PygmentsLexer(HtmlLexer)
+    else:
+        return None
+
+
 
 last_cursor_pos = {}
 
@@ -148,6 +226,19 @@ def editor(filename='untitled.py'):
         multiline=False,
         focusable=False,
     )
+
+
+    def run_html_server(html_code):
+        tmp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(tmp_dir, "index.html")
+
+        with open(file_path, "w") as f:
+            f.write(html_code)
+
+        subprocess.Popen(
+            ["python3", "-m", "http.server", "8700", "--directory", tmp_dir]
+        )
+
 
     def update_status_bar(message=None):
         if message:
@@ -479,6 +570,9 @@ def editor(filename='untitled.py'):
                     os.system(f"{compiler} {tmp_filename} -o {bin_path} && {bin_path}")
                     if os.path.exists(bin_path):
                         os.remove(bin_path)
+                elif ext == ".html":
+                    run_html_server(text)
+                    print("HTML server started at http://localhost:8700")
                 else:
                     os.system(f"bash {tmp_filename}")
             finally:
@@ -501,16 +595,53 @@ def editor(filename='untitled.py'):
 
             try:
                 if ext == ".py":
-                    result = subprocess.run(
-                        ["python3", tmp_path], capture_output=True, text=True
-                    )
+                    result = subprocess.run(["python3", tmp_path], capture_output=True, text=True)
+
                 elif ext == ".go":
-                    result = subprocess.run(
-                        ["go", "run", tmp_path], capture_output=True, text=True
-                    )
+                    result = subprocess.run(["go", "run", tmp_path], capture_output=True, text=True)
+
+                elif ext == ".sh":
+                    result = subprocess.run(["bash", tmp_path], capture_output=True, text=True)
+
+                elif ext == ".js":
+                    result = subprocess.run(["node", tmp_path], capture_output=True, text=True)
+                elif ext == ".html":
+                    run_html_server(editor.text)
+                    result = subprocess.CompletedProcess(args=[], returncode=0, stdout="HTML server started at http://localhost:8700\n", stderr="")
+
+                elif ext == ".rs":
+                    exe_path = tmp_path + ".out"
+                    compile_res = subprocess.run(["rustc", tmp_path, "-o", exe_path], capture_output=True, text=True)
+                    if compile_res.returncode != 0:
+                        result = compile_res
+                    else:
+                        result = subprocess.run([exe_path], capture_output=True, text=True)
+                        os.remove(exe_path)
+
+                elif ext == ".c":
+                    exe_path = tmp_path + ".out"
+                    compile_res = subprocess.run(["gcc", tmp_path, "-o", exe_path], capture_output=True, text=True)
+                    if compile_res.returncode != 0:
+                        result = compile_res
+                    else:
+                        result = subprocess.run([exe_path], capture_output=True, text=True)
+                        os.remove(exe_path)
+
+                elif ext in [".cpp", ".cc", ".cxx"]:
+                    exe_path = tmp_path + ".out"
+                    compile_res = subprocess.run(["g++", tmp_path, "-o", exe_path], capture_output=True, text=True)
+                    if compile_res.returncode != 0:
+                        result = compile_res
+                    else:
+                        result = subprocess.run([exe_path], capture_output=True, text=True)
+                        os.remove(exe_path)
+
                 else:
                     result = subprocess.CompletedProcess(
-                        args=[], returncode=1, stdout="", stderr="Unsupported file type"
+                        args=[],
+                        returncode=1,
+                        stdout="",
+                        stderr="Unsupported file type"
                     )
 
                 output = (result.stdout or "") + (result.stderr or "")
@@ -521,6 +652,7 @@ def editor(filename='untitled.py'):
                 os.remove(tmp_path)
 
         threading.Thread(target=run_in_thread, daemon=True).start()
+
 
     @kb.add("enter")
     def execute_command(event):
