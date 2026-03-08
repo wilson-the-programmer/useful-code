@@ -1,0 +1,21 @@
+        elif mode == "bash":
+
+            code = code.replace("\r\n", "\n").replace("\r", "\n")
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".sh", mode="w") as f:
+                f.write(code)
+                path = f.name
+
+            try:
+                result = subprocess.check_output(
+                    ["bash", path],
+                    stderr=subprocess.STDOUT
+                ).decode()
+
+                output = result
+
+            except subprocess.CalledProcessError as e:
+                output = e.output.decode()
+
+            finally:
+                os.remove(path)
