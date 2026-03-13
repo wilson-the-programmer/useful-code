@@ -1,4 +1,5 @@
-""" Editor designed for developers """
+"""Editor designed for developers"""
+
 import os
 import re
 import tempfile
@@ -25,13 +26,16 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers import (
     BashLexer,
     CLexer,
-    GoLexer,
     RustLexer,
-    PythonLexer,
     CppLexer,
+    GoLexer,
+    PythonLexer,
+    HtmlLexer,
     JavascriptLexer,
-    HtmlLexer
+    CssLexer,
 )
+
+
 from pygments.styles import get_style_by_name
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
 
@@ -43,7 +47,6 @@ open_files = []
 file_index = 0
 current_file = "untitled.py"
 floats = []
-
 syntax_enabled = True
 
 all_themes = [
@@ -95,9 +98,20 @@ all_themes = [
     "vim",
     "vs",
     "xcode",
-    "zenburn"
+    "zenburn",
 ]
 
+my_themes = [
+    "coffee",
+    "dracula",
+    "github-dark",
+    "gruvbox-dark",
+    "lightbulb",
+    "material",
+    "nord-darker",
+    "paraiso-dark",
+    "zenburn",
+]
 
 
 key_guide = """
@@ -127,11 +141,12 @@ Control _ : Clear active editor
 Control space : Insert indent
 """
 
-current_theme_index = 25 #'material'
+current_theme_index = 3
 
 WHITE = "\033[1;37m"
 YELLOW = "\033[1;33m"
 CYAN = "\033[1;36m"
+LIGHT_BLUE = "\033[1;38;2;150;150;255m"
 RED = "\033[1;31m"
 GREEN = "\033[1;32m"
 RESET = "\033[0m"
@@ -153,54 +168,47 @@ def save_file(path, content):
         f.write(content)
 
 
-def get_theme_style():
-    return style_from_pygments_cls(get_style_by_name("material"))
-
-
 # -----------------------
 # Styles
 # -----------------------
 base_style = Style.from_dict(
     {
-        "top-pane": "bg:#000000 #ffffff bold",
-        "bottom-pane": "bg:#000000 #ffffff bold",
-        "status": "bg:#001122 #ffffff bold",
+        "top-pane": "bg:black white bold",
+        "bottom-pane": "bg:black orange bold",
+        "status": "bg:#222255 white bold",
     }
 )
 
-style = merge_styles([get_theme_style(), base_style])
-
 
 def get_lexer():
-    if current_file.endswith(".txt"):
+    if not syntax_enabled:
         return None
-
     if current_file.endswith(".sh"):
         return PygmentsLexer(BashLexer)
-    elif current_file.endswith(".c"):
+    if current_file.endswith(".c"):
         return PygmentsLexer(CLexer)
-    elif current_file.endswith(".go"):
-        return PygmentsLexer(GoLexer)
-    elif current_file.endswith(".rs"):
-        return PygmentsLexer(RustLexer)
-    elif current_file.endswith(".py"):
-        return PygmentsLexer(PythonLexer)
-    elif current_file.endswith(".cpp") or current_file.endswith(".cc") or current_file.endswith(".cxx"):
+    if current_file.endswith(".cpp"):
         return PygmentsLexer(CppLexer)
-    elif current_file.endswith(".js"):
-        return PygmentsLexer(JavascriptLexer)
-    elif current_file.endswith(".html") or current_file.endswith(".htm"):
+    if current_file.endswith(".py"):
+        return PygmentsLexer(PythonLexer)
+    if current_file.endswith(".rs"):
+        return PygmentsLexer(RustLexer)
+    if current_file.endswith(".go"):
+        return PygmentsLexer(GoLexer)
+    if current_file.endswith(".html"):
         return PygmentsLexer(HtmlLexer)
+    if current_file.endswith(".js"):
+        return PygmentsLexer(JavascriptLexer)
     else:
         return None
 
 
-
 last_cursor_pos = {}
 
-def editor(filename='untitled.py'):
 
-    top_editor = TextArea(
+def editor(filename="untitled.py"):
+
+    editor = TextArea(
         text="",
         lexer=get_lexer(),
         scrollbar=False,
@@ -211,14 +219,6 @@ def editor(filename='untitled.py'):
         height=Dimension(min=9),
     )
 
-    bottom_editor = TextArea(
-        text="",
-        scrollbar=False,
-        focus_on_click=True,
-        wrap_lines=True,
-        height=Dimension(min=4),
-    )
-
     status_bar = TextArea(
         text="",
         height=1,
@@ -227,117 +227,73 @@ def editor(filename='untitled.py'):
         focusable=False,
     )
 
-
-    def run_html_server(html_code):
-        tmp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(tmp_dir, "index.html")
-
-        with open(file_path, "w") as f:
-            f.write(html_code)
-
-        subprocess.Popen(
-            ["python3", "-m", "http.server", "8700", "--directory", tmp_dir]
-        )
-
-
     def update_status_bar(message=None):
         if message:
             status_bar.text = message
         else:
             try:
-                ln = top_editor.buffer.document.cursor_position_row + 1
-                col = top_editor.buffer.document.cursor_position_col + 1
+                ln = editor.buffer.document.cursor_position_row + 1
+                col = editor.buffer.document.cursor_position_col + 1
             except:
                 ln, col = 1, 1
             status_bar.text = f"'{current_file}':     {ln}, {col}"
 
-    def on_top_editor_change(_):
+    def on_editor_change(_):
         update_status_bar()
 
-    top_editor.buffer.on_cursor_position_changed += on_top_editor_change
-    top_editor.buffer.on_text_changed += on_top_editor_change
+    editor.buffer.on_cursor_position_changed += on_editor_change
+    editor.buffer.on_text_changed += on_editor_change
 
     async def show_temp_message(msg, delay=2):
         update_status_bar(msg)
         await asyncio.sleep(delay)
         update_status_bar()
 
-    kb = KeyBindings()
+    def get_theme_style():
+        if filename.endswith(".sh"):
+            return style_from_pygments_cls(get_style_by_name("gruvbox-dark"))
+        elif (
+            filename.endswith(".c")
+            or filename.endswith(".cpp")
+            or filename.endswith(".go")
+        ):
+            return style_from_pygments_cls(get_style_by_name("lightbulb"))
+        elif filename.endswith(".py"):
+            return style_from_pygments_cls(get_style_by_name("material"))
+        elif (
+            filename.endswith(".js")
+            or filename.endswith(".html")
+            or filename.endswith(".rs")
+        ):
+            return style_from_pygments_cls(get_style_by_name("github-dark"))
+        else:
+            return None
 
+    style = merge_styles([get_theme_style(), base_style])
+
+    kb = KeyBindings()
 
     @kb.add("c-u")
     def reload_current_file(event):
         if current_file:
-            file_buffers[current_file] = top_editor.text
-            top_editor.text = load_file(current_file)
-            top_editor.lexer = get_lexer()
-            event.app.layout.focus(top_editor)
-
-
-    @kb.add("c-i")
-    def format_go_message(event):
-        text = bottom_editor.text
-        lines = text.splitlines()
-        formatted = []
-
-        pattern = re.compile(r".*:(\d+):(\d+):\s*(.*)", re.IGNORECASE)
-
-        for line in lines:
-            match = pattern.match(line)
-            if not match:
-                continue
-
-            lineno, colno, msg = match.groups()
-            msg = msg.strip()
-
-            lower_msg = msg.lower()
-            if "error" in lower_msg:
-                idx = lower_msg.find("error")
-                words = msg[:idx].strip().split()
-                if words:
-                    error_type = f"{words[-1].capitalize()} Error"
-                else:
-                    error_type = "Error"
-                detail_msg = msg[idx + len("error"):].strip(" :")
-            else:
-                error_type = "Error"
-                detail_msg = msg
-
-            formatted.append(f"{error_type} :  Line {lineno}, {colno}")
-
-            if detail_msg:
-                lower_detail = detail_msg.lower()
-
-                if lower_detail.startswith("expected "):
-                    rest = detail_msg[len("expected "):]
-                    bullet = f"• Expected  👉 {rest}"
-                elif lower_detail.startswith("unexpected "):
-                    rest = detail_msg[len("unexpected "):]
-                    bullet = f"• Unexpected 👉 {rest}"
-                else:
-                    bullet = f"• {detail_msg}"
-
-                formatted.append(f"    {bullet}")
-
-        bottom_editor.text = "\n".join(formatted)
-
-    @kb.add("c-w")
-    def show_key_guide(event):
-        bottom_editor.text = key_guide
+            file_buffers[current_file] = editor.text
+            editor.text = load_file(current_file)
+            editor.lexer = get_lexer()
+            event.app.layout.focus(editor)
 
     @kb.add("c-x")
     def cycle_themes(event):
         global current_theme_index, style
-        current_theme_index = (current_theme_index + 1) % len(all_themes)
+        current_theme_index = (current_theme_index + 1) % len(my_themes)
         style = merge_styles(
             [
                 style_from_pygments_cls(
-                    get_style_by_name(all_themes[current_theme_index])
+                    get_style_by_name(my_themes[current_theme_index])
                 ),
                 base_style,
             ]
         )
-        top_editor.lexer = get_lexer()
+        editor.lexer = get_lexer()
         event.app.style = style
         update_status_bar(f"Theme: {all_themes[current_theme_index]}")
 
@@ -345,12 +301,11 @@ def editor(filename='untitled.py'):
     def toggle_syntax(event):
         global syntax_enabled
         syntax_enabled = not syntax_enabled
-        top_editor.lexer = get_lexer() if syntax_enabled else None
+        editor.lexer = get_lexer() if syntax_enabled else None
         event.app.invalidate()
 
     @kb.add("c-space")
     def insert_indent(event):
-        editor = top_editor if event.app.layout.has_focus(top_editor) else bottom_editor
         editor.buffer.insert_text("    ")
 
     @kb.add("c-q")
@@ -373,14 +328,14 @@ def editor(filename='untitled.py'):
             open_files.pop(file_index)
             file_index %= len(open_files)
             current_file = open_files[file_index]
-            top_editor.text = load_file(current_file)
+            editor.text = load_file(current_file)
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
             update_status_bar()
 
         def cancel_close():
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
 
         dialog = Dialog(
             title="Close File",
@@ -405,8 +360,8 @@ def editor(filename='untitled.py'):
     @kb.add("c-s")
     def save_current(event):
         if current_file:
-            file_buffers[current_file] = top_editor.text
-            save_file(current_file, top_editor.text)
+            file_buffers[current_file] = editor.text
+            save_file(current_file, editor.text)
             asyncio.ensure_future(
                 show_temp_message(f"File: '{current_file}' Saved.", 2)
             )
@@ -421,22 +376,22 @@ def editor(filename='untitled.py'):
             if not path:
                 return
             with open(path, "w") as f:
-                f.write(top_editor.text)
+                f.write(editor.text)
             if current_file:
-                file_buffers[current_file] = top_editor.text
+                file_buffers[current_file] = editor.text
             if path not in open_files:
                 open_files.append(path)
             file_index = open_files.index(path)
             current_file = path
-            top_editor.text = load_file(path)
-            top_editor.lexer = get_lexer()
+            editor.text = load_file(path)
+            editor.lexer = get_lexer()
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
             update_status_bar(f"Saved As: {current_file}")
 
         def cancel():
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
             update_status_bar()
 
         dialog = Dialog(
@@ -456,90 +411,11 @@ def editor(filename='untitled.py'):
 
     @kb.add("c-_")
     def clear_active(event):
-        if event.app.layout.has_focus(top_editor):
-            top_editor.text = ""
+        if event.app.layout.has_focus(editor):
+            editor.text = ""
         elif event.app.layout.has_focus(bottom_editor):
             bottom_editor.text = ""
         update_status_bar()
-
-    @kb.add("c-p")
-    def list_functions(event):
-        text = top_editor.text
-        lines = text.splitlines()
-        functions = []
-        pattern = re.compile(r"^\s*(?:def|func)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
-
-        for i, line in enumerate(lines, start=1):
-            match = pattern.match(line)
-            if match:
-                func_name = match.group(1)
-                functions.append((func_name, i))
-
-        functions.sort(key=lambda x: x[0].lower())
-
-        if functions:
-            output = "Functions:\n\n"
-            output += "\n".join(f"{name}, {lineno}" for name, lineno in functions)
-        else:
-            output = "No functions found."
-
-        bottom_editor.text = output
-
-    @kb.add("c-d")
-    def format_pylint_output(event):
-        text = bottom_editor.text
-        lines = text.splitlines()
-        results = {}
-
-        score_match = None
-        for line in lines:
-            score = re.search(r"rated at ([0-9.]+)/10", line)
-            if score:
-                score_match = score.group(1)
-                continue
-            m = re.search(r"/.*?:([0-9]+):([0-9]+):\s+([A-Z]\d+):\s+(.*)", line)
-            if m:
-                lineno, colno, code, msg = m.groups()
-                lineno, colno = int(lineno), int(colno)
-                if lineno not in results:
-                    results[lineno] = []
-                results[lineno].append(msg.strip())
-
-        formatted = ["Code Analysis:", "———————————"]
-        for lineno in sorted(results.keys()):
-            formatted.append(f"> Line : {lineno}, 0 :\n")
-            for msg in results[lineno]:
-                formatted.append(f"• {msg}")
-            formatted.append("———————————")
-
-        if score_match:
-            formatted.append(f"\nCode Score: {score_match} / 10")
-
-        bottom_editor.text = "\n".join(formatted)
-
-    @kb.add("c-v")
-    def pylint_top_editor(event):
-        def run_lint():
-            with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp_file:
-                tmp_file.write(top_editor.text)
-                tmp_filename = tmp_file.name
-
-            try:
-                result = subprocess.run(
-                    ["pylint", tmp_filename], capture_output=True, text=True
-                )
-                bottom_editor.text = result.stdout + "\n" + result.stderr
-            except FileNotFoundError:
-                bottom_editor.text = "Error: pylint is not installed or not in PATH."
-            except Exception as e:
-                bottom_editor.text = f"Unexpected error: {e}"
-            finally:
-                try:
-                    os.remove(tmp_filename)
-                except:
-                    pass
-
-        threading.Thread(target=run_lint, daemon=True).start()
 
     @kb.add("c-b")
     def open_shell(event):
@@ -548,125 +424,45 @@ def editor(filename='untitled.py'):
 
         run_in_terminal(shell)
 
-    @kb.add("c-t")
+    @kb.add("c-r")
     def run_code(event):
         def run_script():
             os.system("clear")
-            text = top_editor.text
+            code = editor.text
             ext = os.path.splitext(current_file)[1]
 
             with tempfile.NamedTemporaryFile("w", delete=False, suffix=ext) as tmp:
-                tmp.write(text)
+                tmp.write(code)
                 tmp_filename = tmp.name
 
             try:
                 if ext == ".py":
                     os.system(f"python {tmp_filename}")
+                elif ext == ".js":
+                    os.system(f"node {tmp_filename}")
                 elif ext == ".go":
                     os.system(f"go run '{tmp_filename}'")
-                elif ext == ".c" or ext == ".rs":
+                elif ext == ".c" or ext == ".cpp" or ext == ".rs":
                     bin_path = f"{tmp_filename}.bin"
-                    compiler = "gcc" if ext == ".c" else "rustc"
+                    if ext == ".c":
+                        compiler = "gcc"
+                    elif ext == ".cpp":
+                        compiler = "g++"
+                    else:
+                        compiler = "rustc"
+
                     os.system(f"{compiler} {tmp_filename} -o {bin_path} && {bin_path}")
                     if os.path.exists(bin_path):
                         os.remove(bin_path)
-                elif ext == ".html":
-                    run_html_server(text)
-                    print("HTML server started at http://localhost:8700")
                 else:
                     os.system(f"bash {tmp_filename}")
             finally:
                 os.remove(tmp_filename)
 
             sleep(1)
-            input("\n\n\n( Press Enter to return to editor )\n\n")
+            input(f"\n\n\n{LIGHT_BLUE}( Press Enter to return to editor ){RESET}\n\n")
 
         run_in_terminal(run_script)
-
-    @kb.add("c-r")
-    def run_code(event):
-        editor = top_editor if event.app.layout.has_focus(top_editor) else bottom_editor
-        ext = os.path.splitext(current_file)[1]
-
-        def run_in_thread():
-            with tempfile.NamedTemporaryFile(mode="w", suffix=ext, delete=False) as tmp:
-                tmp.write(editor.text)
-                tmp_path = tmp.name
-
-            try:
-                if ext == ".py":
-                    result = subprocess.run(["python3", tmp_path], capture_output=True, text=True)
-
-                elif ext == ".go":
-                    result = subprocess.run(["go", "run", tmp_path], capture_output=True, text=True)
-
-                elif ext == ".sh":
-                    result = subprocess.run(["bash", tmp_path], capture_output=True, text=True)
-
-                elif ext == ".js":
-                    result = subprocess.run(["node", tmp_path], capture_output=True, text=True)
-                elif ext == ".html":
-                    run_html_server(editor.text)
-                    result = subprocess.CompletedProcess(args=[], returncode=0, stdout="HTML server started at http://localhost:8700\n", stderr="")
-
-                elif ext == ".rs":
-                    exe_path = tmp_path + ".out"
-                    compile_res = subprocess.run(["rustc", tmp_path, "-o", exe_path], capture_output=True, text=True)
-                    if compile_res.returncode != 0:
-                        result = compile_res
-                    else:
-                        result = subprocess.run([exe_path], capture_output=True, text=True)
-                        os.remove(exe_path)
-
-                elif ext == ".c":
-                    exe_path = tmp_path + ".out"
-                    compile_res = subprocess.run(["gcc", tmp_path, "-o", exe_path], capture_output=True, text=True)
-                    if compile_res.returncode != 0:
-                        result = compile_res
-                    else:
-                        result = subprocess.run([exe_path], capture_output=True, text=True)
-                        os.remove(exe_path)
-
-                elif ext in [".cpp", ".cc", ".cxx"]:
-                    exe_path = tmp_path + ".out"
-                    compile_res = subprocess.run(["g++", tmp_path, "-o", exe_path], capture_output=True, text=True)
-                    if compile_res.returncode != 0:
-                        result = compile_res
-                    else:
-                        result = subprocess.run([exe_path], capture_output=True, text=True)
-                        os.remove(exe_path)
-
-                else:
-                    result = subprocess.CompletedProcess(
-                        args=[],
-                        returncode=1,
-                        stdout="",
-                        stderr="Unsupported file type"
-                    )
-
-                output = (result.stdout or "") + (result.stderr or "")
-                bottom_editor.text = ""
-                bottom_editor.buffer.insert_text(output)
-
-            finally:
-                os.remove(tmp_path)
-
-        threading.Thread(target=run_in_thread, daemon=True).start()
-
-
-    @kb.add("enter")
-    def execute_command(event):
-        if event.app.layout.has_focus(bottom_editor):
-            buf = bottom_editor.buffer
-            line = buf.document.current_line.strip()
-            if not line:
-                buf.insert_text("\n")
-                return
-            result = subprocess.run(line, shell=True, capture_output=True, text=True)
-            output = (result.stdout or "") + (result.stderr or "")
-            buf.insert_text("\n" + output + "\n")
-        else:
-            event.app.layout.current_control.buffer.newline()
 
     @kb.add("c-f")
     def open_file_dialog(event):
@@ -680,20 +476,20 @@ def editor(filename='untitled.py'):
             if not os.path.exists(path):
                 open(path, "w").close()
             if current_file:
-                file_buffers[current_file] = top_editor.text
+                file_buffers[current_file] = editor.text
             if path not in open_files:
                 open_files.append(path)
             file_index = open_files.index(path)
             current_file = path
-            top_editor.text = load_file(path)
-            top_editor.lexer = get_lexer()
+            editor.text = load_file(path)
+            editor.lexer = get_lexer()
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
             update_status_bar()
 
         def cancel():
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
             update_status_bar()
 
         dialog = Dialog(
@@ -710,22 +506,20 @@ def editor(filename='untitled.py'):
         floats.clear()
         floats.append(Float(content=dialog))
         event.app.layout.focus(filename_input)
-    
 
     @kb.add("c-z")
     def cycle_files(event):
         global file_index, current_file, last_cursor_pos
         if not open_files:
             return
-        last_cursor_pos[current_file] = top_editor.buffer.cursor_position
-        file_buffers[current_file] = top_editor.text
+        last_cursor_pos[current_file] = editor.buffer.cursor_position
+        file_buffers[current_file] = editor.text
         file_index = (file_index + 1) % len(open_files)
         current_file = open_files[file_index]
-        top_editor.text = file_buffers.get(current_file, "")
-        top_editor.buffer.cursor_position = last_cursor_pos.get(current_file, 0)
+        editor.text = file_buffers.get(current_file, "")
+        editor.buffer.cursor_position = last_cursor_pos.get(current_file, 0)
         update_status_bar()
-        
-    
+
     @kb.add("c-l")
     def goto_line_dialog(event):
         line_input = TextArea(height=1, multiline=False, prompt="Line #: ")
@@ -733,18 +527,18 @@ def editor(filename='untitled.py'):
         def jump():
             try:
                 line_number = int(line_input.text.strip())
-                lines = top_editor.text.splitlines()
+                lines = editor.text.splitlines()
                 if 1 <= line_number <= len(lines):
                     pos = sum(len(l) + 1 for l in lines[: line_number - 1])
-                    top_editor.buffer.cursor_position = pos
+                    editor.buffer.cursor_position = pos
             except:
                 pass
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
 
         def cancel():
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
 
         dialog = Dialog(
             title="Go To Line",
@@ -769,21 +563,21 @@ def editor(filename='untitled.py'):
             term = search_input.text.strip()
             if not term:
                 floats.clear()
-                event.app.layout.focus(top_editor)
+                event.app.layout.focus(editor)
                 return
 
-            buf = top_editor.buffer
+            buf = editor.buffer
             start = buf.cursor_position
             found_index = buf.document.text.find(term, start)
             if found_index != -1:
                 buf.cursor_position = found_index
                 buf.selection_state = None
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
 
         def cancel():
             floats.clear()
-            event.app.layout.focus(top_editor)
+            event.app.layout.focus(editor)
 
         dialog = Dialog(
             title="Search",
@@ -800,22 +594,16 @@ def editor(filename='untitled.py'):
         floats.append(Float(content=dialog))
         event.app.layout.focus(search_input)
 
-    divider = TextArea(
-        height=1, text="─" * 80, style="class:bottom-pane", focusable=False
-    )
-
     root_container = FloatContainer(
         content=HSplit(
             [
-                top_editor,
-                divider,
-                bottom_editor,
+                editor,
                 status_bar,
             ]
         ),
         floats=floats,
     )
-    
+
     global current_file, file_index
 
     if not os.path.exists(filename):
@@ -824,9 +612,8 @@ def editor(filename='untitled.py'):
     current_file = filename
     open_files.append(filename)
     file_index = 0
-    top_editor.text = load_file(filename)
+    editor.text = load_file(filename)
     update_status_bar()
-
 
     app = Application(
         layout=Layout(root_container),
@@ -835,7 +622,6 @@ def editor(filename='untitled.py'):
         mouse_support=True,
         style=style,
     )
-
 
     app.run()
 
@@ -870,7 +656,7 @@ session = PromptSession(
 
 
 while True:
-    prompt_label = "\n💲 "
+    prompt_label = "\n$ "
     try:
         colors = [
             "cyan",
@@ -914,9 +700,3 @@ while True:
             break
     except Exception as e:
         print(e)
-
-
-
-
-
-
