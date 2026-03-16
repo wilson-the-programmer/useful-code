@@ -32,7 +32,7 @@ body {
 }
 .CodeMirror {
     height: 545px;
-    font-size: 42px;
+    font-size: 44px;
     text-shadow: 0 0 3px black;
     padding: 14px;
     font-weight: bold;
@@ -45,7 +45,7 @@ select, button {
 }
 .output-box {
     width: 100%;
-    height: 800px;
+    height: 1700px;
     background: white;
     color: black;
     font-weight: bold;
@@ -88,13 +88,20 @@ button:hover {
 <textarea id="code" name="code">{{ code }}</textarea><br>
 
 <select name="mode" id="mode">
-<option value="python" {% if mode=='python' %}selected{% endif %}>Python</option>
-<option value="sh" {% if mode=='sh' %}selected{% endif %}>Bash</option>
+
+<option value="arm64" {% if mode=='arm64' %}selected{% endif %}>ARM64</option>
 <option value="c" {% if mode=='c' %}selected{% endif %}>C</option>
 <option value="golang" {% if mode=='golang' %}selected{% endif %}>Golang</option>
-<option value="html" {% if mode=='html' %}selected{% endif %}>HTML</option>
+<option value="sh" {% if mode=='sh' %}selected{% endif %}>Bash</option>
+<option value="python" {% if mode=='python' %}selected{% endif %}>Python</option>
+<option value="elixir" {% if mode=='elixir' %}selected{% endif %}>Elixir</option>
+<option value="php" {% if mode=='php' %}selected{% endif %}>PHP</option>
 <option value="js" {% if mode=='js' %}selected{% endif %}>JavaScript</option>
+<option value="html" {% if mode=='html' %}selected{% endif %}>HTML</option>
+
 </select>
+
+
 
 <button type="button" id="open-btn">Open</button>
 <button type="button" id="save-btn">Save</button>
@@ -118,6 +125,11 @@ button:hover {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/clike/clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/go/go.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/shell/shell.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/elixir/elixir.min.js"></script>
+
+
 
 <script>
 const textarea = document.getElementById('code');
@@ -150,12 +162,18 @@ let cmMode = 'python';
 
 if(mode === 'python') cmMode = 'python';
 else if(mode === 'c') cmMode = 'text/x-csrc';
+else if(mode === 'php') cmMode = 'php';
+
+else if(mode === 'elixir') cmMode = 'elixir';
 else if(mode === 'golang') cmMode = 'go';
 else if(mode === 'html') cmMode = 'htmlmixed';
 else if(mode === 'js') cmMode = 'javascript';
 else if(mode === 'sh') cmMode = 'shell';
 
+else if(mode === 'arm64') cmMode = 'arm64';
+
 editor.setOption('mode', cmMode);
+
 }
 
 modeSelect.addEventListener('change', updateMode);
@@ -242,6 +260,48 @@ def index():
                 output = result
             except subprocess.CalledProcessError as e:
                 output = e.output.decode()
+        elif mode == "php":
+            tmp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".php") as tmp:
+                    tmp.write(code.encode())
+                    tmp_path = tmp.name
+
+                result = subprocess.check_output(
+                    ["php", tmp_path],
+                    stderr=subprocess.STDOUT
+                ).decode()
+
+                output = result
+
+            except subprocess.CalledProcessError as e:
+                output = "PHP Error:\n" + e.output.decode()
+
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        elif mode == "elixir":
+            tmp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".exs") as tmp:
+                    tmp.write(code.encode())
+                    tmp_path = tmp.name
+
+                result = subprocess.check_output(
+                    ["elixir", tmp_path],
+                    stderr=subprocess.STDOUT
+                ).decode()
+
+                output = result
+
+            except subprocess.CalledProcessError as e:
+                output = "Elixir Error:\n" + e.output.decode()
+
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                    
 
         elif mode == "sh":
             try:
@@ -308,6 +368,36 @@ def index():
                 output = run
             except subprocess.CalledProcessError as e:
                 output = e.output.decode()
+
+        elif mode == "arm64":          
+            tmp_path = None          
+            obj_path = None          
+            exe_path = None          
+            try:          
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".s") as tmp:          
+                    tmp.write(code.encode())          
+                    tmp_path = tmp.name          
+
+                obj_path = tmp_path.replace(".s", ".o")          
+                exe_path = tmp_path.replace(".s", "")          
+
+                subprocess.check_output(["as", "-o", obj_path, tmp_path], stderr=subprocess.STDOUT)          
+                subprocess.check_output(["ld", "-o", exe_path, obj_path], stderr=subprocess.STDOUT)          
+                proc = subprocess.Popen([exe_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)          
+                result, _ = proc.communicate()          
+                output = result.decode()          
+
+            except Exception as e:          
+                if isinstance(e, subprocess.CalledProcessError) and e.output:          
+                    output = "ARM64 Error:\n" + e.output.decode()          
+                else:          
+                    output = "ARM64 Error:\n" + str(e)          
+
+            finally:          
+                for path in [tmp_path, obj_path, exe_path]:          
+                    if path and os.path.exists(path):          
+                        os.remove(path)
+
 
     return render_template_string(HTML, code=code, output=output, mode=mode)
 
