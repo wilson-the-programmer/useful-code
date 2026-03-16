@@ -1,0 +1,334 @@
+In ARM64 (AArch64) assembly, there aren’t “keywords” like in Python or C.
+
+Instead, there are instructions, directives, and pseudo-instructions. I’ll give you a structured list with explanations for the most common ones.
+
+This is the “vocabulary” of ARM64 assembly.
+
+
+-------------------------------------
+
+
+1. Data Movement Instructions
+
+Instruction     Description
+
+mov     Move a value into a register (x0–x30).
+
+Example: mov x0, 5
+
+ldr     Load a value from memory into a register.
+
+Example: ldr x0, [x1]
+str     Store a value from a register into memory.
+
+Example: str x0, [x1]
+adr     Load the address of a label into a register.
+
+Example: adr x0, msg
+ldrb / strb     Load/store 1 byte from memory
+
+
+
+---
+
+2. Arithmetic Instructions
+
+Instruction     Description
+
+add     Add two registers or a register + immediate.
+
+Example: add x0, x1, x2
+sub     Subtract.
+
+Example: sub x0, x1, x2
+mul     Multiply (signed).
+
+Example: mul x0, x1, x2
+
+udiv / sdiv     Unsigned / signed division.
+
+Example: udiv x0, x1, x2
+
+msub    Multiply-subtract. x0 = x1*x2 - x3
+neg     Negate value
+
+
+
+---
+
+3. Bitwise / Logical Instructions
+
+Instruction     Description
+
+and     Bitwise AND
+
+orr     Bitwise OR
+
+eor     Bitwise XOR
+
+lsl     Logical shift left
+
+lsr     Logical shift right
+
+asr     Arithmetic shift right
+
+ror     Rotate right
+
+
+
+---
+
+4. Comparison / Conditional Instructions
+
+Instruction     Description
+
+cmp     Compare two registers (sets condition flags)
+
+cmn     Compare negative (x + y) sets flags
+
+cbz     Compare to zero, branch if zero
+
+cbnz    Compare to zero, branch if not zero
+
+b.eq / beq      Branch if equal
+
+b.ne    Branch if not equal
+
+b.lt    Branch if less than
+
+b.le    Branch if less or equal
+
+b.gt    Branch if greater than
+
+b.ge    Branch if greater or equal
+
+b       Unconditional branch
+
+
+> Note: Conditional branches are how “if statements” are implemented in ARM64.
+
+
+
+
+---
+
+5. Load / Store Multiple & Stack Instructions
+
+Instruction     Description
+
+push / pop      Pseudo-instruction for saving/restoring registers (uses stp/ldp under the hood)
+
+stp / ldp       Store/load pair of registers to/from memory
+
+str / ldr       Single register load/store
+
+
+
+---
+
+6. System / Exception / I/O Instructions
+
+Instruction     Description
+
+svc     Supervisor call (system call). Like syscall in x86.
+
+Example: svc 0 for Linux
+
+nop     No operation
+
+hlt     Halt processor (optional in some contexts)
+
+
+
+---
+
+7. Program Flow / Labels
+
+Labels are just names in code:
+
+loop_start:
+    add x0, x0, 1
+    cmp x0, 10
+    blt loop_start
+
+You branch to them with b label or conditional branches.
+
+
+
+---
+
+8. Assembler Directives (Pseudo-ops)
+
+These aren’t instructions, they tell the assembler how to organize the program.
+
+Directive       Description
+
+
+.global           Make a label visible to linker (_start)
+
+.section          Define code/data section (.text, .data, .bss)
+
+.ascii / .asciz   Store text in memory (with or without null terminator)
+
+.skip             Reserve bytes in memory (uninitialized)
+
+.word / .quad     Store 32-bit / 64-bit numbers
+
+
+
+---
+
+9. Registers
+
+x0–x30            General-purpose 64-bit registers
+
+sp                Stack pointer
+
+pc                Program counter (not directly accessible)
+
+flags are set by comparison/arith operations
+
+
+
+---
+
+10. Example “If + Loop”
+
+mov x0, 0        // sum
+mov x1, 1        // counter
+
+loop:
+cmp x1, 11
+bge done
+add x0, x0, x1
+add x1, x1, 1
+b loop
+
+done:
+
+This sums 1 to 10
+
+cmp + bge is how the “if condition” works
+
+b loop is the loop
+
+
+
+---
+
+💡 Summary:
+
+Instructions = What the CPU executes
+
+Directives   = Tell assembler how to organize code/data
+
+Branches + comparisons = if statements
+
+Loops = labels + branches
+
+
+# ARM64 Assembly Cheat Sheet (AArch64)
+# Registers:
+# x0–x30: general-purpose 64-bit
+# sp: stack pointer
+# pc: program counter (read-only)
+# flags: status flags (set by cmp, add, sub, etc.)
+
+# 1. Data Movement
+mov x0, 5         # move immediate into register
+ldr x0, [x1]      # load 64-bit value from memory
+str x0, [x1]      # store 64-bit value to memory
+ldrb w0, [x1]     # load 1 byte
+strb w0, [x1]     # store 1 byte
+adr x0, label     # load address of label
+
+# 2. Arithmetic
+add x0, x1, x2    # x0 = x1 + x2
+sub x0, x1, x2    # subtraction
+mul x0, x1, x2    # multiply
+udiv x0, x1, x2   # unsigned division
+sdiv x0, x1, x2   # signed division
+neg x0, x1        # negate x1
+
+# 3. Bitwise / Logical
+and x0, x1, x2    # bitwise AND
+orr x0, x1, x2    # bitwise OR
+eor x0, x1, x2    # XOR
+lsl x0, x1, 3     # logical shift left
+lsr x0, x1, 3     # logical shift right
+asr x0, x1, 3     # arithmetic shift right
+ror x0, x1, 3     # rotate right
+
+# 4. Comparison / Conditional Branch
+cmp x0, x1        # compare, sets flags
+cbz x0, label     # branch if zero
+cbnz x0, label    # branch if not zero
+beq label         # branch if equal
+bne label         # branch if not equal
+blt label         # branch if less than
+ble label         # branch if less or equal
+bgt label         # branch if greater than
+bge label         # branch if greater or equal
+b label           # unconditional branch
+
+# 5. Loops (example: sum 1..10)
+mov x0, 0         # sum
+mov x1, 1         # counter
+loop:
+    cmp x1, 11
+    bge done
+    add x0, x0, x1
+    add x1, x1, 1
+    b loop
+done:
+
+# 6. System Calls / I/O
+# Example: write message to stdout
+adr x1, msg
+mov x2, len
+mov x0, 1         # stdout
+mov x8, 64        # syscall write
+svc 0
+
+# Exit
+mov x0, 0
+mov x8, 93        # syscall exit
+svc 0
+
+# 7. Assembler Directives
+.global _start       # visible to linker
+.section .text       # code section
+.section .data       # initialized data
+.section .bss        # uninitialized data
+.ascii "Hello"       # store text
+.asciz "Hello\0"     # null-terminated string
+.skip 32             # reserve bytes
+.word 123            # 32-bit number
+.quad 123            # 64-bit number
+
+# 8. Pseudo-instructions
+push {x0, x1}        # save registers (uses stp)
+pop {x0, x1}         # restore registers (uses ldp)
+movz x0, 0x1234      # move immediate to low bits
+movk x0, 0x5678      # keep high bits, move low
+
+# 9. Example If + Loop
+mov x0, 0
+mov x1, 1
+loop2:
+    cmp x1, 11
+    bge end_loop
+    and x2, x1, 1    # example: only even numbers
+    cbz x2, skip
+    add x0, x0, x1
+skip:
+    add x1, x1, 1
+    b loop2
+end_loop:
+
+# 10. Summary
+# - if/else: cmp + conditional branch + optional b
+# - loops: label + cmp + conditional branch + b
+# - array access: ldr/str with base + offset
+# - print text: adr x1,label; mov x2,len; mov x0,1; mov x8,64; svc 0
+
