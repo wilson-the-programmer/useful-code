@@ -91,3 +91,99 @@ umulh          // Unsigned multiply high.
 umull          // Unsigned multiply long.
 uxtb           // Unsigned extend byte.
 uxth           // Unsigned extend halfword.
+
+
+
+Most fundamental order
+
+
+Instruction:            Description:
+mov            // Move value.
+ldr            // Load from memory.
+str            // Store register.
+add            // Add two values.
+sub            // Subtract.
+cmp            // Compare values.
+b              // Unconditional branch.
+bl             // Branch with link.
+ret            // Return subroutine.
+ands           // AND and set flags.
+and            // Bitwise AND.
+orr            // OR operation.
+eor            // Exclusive OR.
+adds           // Add and set flags.
+subs           // Subtract set flags.
+lsl            // Logical shift left.
+lsr            // Logical shift right.
+asr            // Arithmetic shift right.
+nop            // No operation.
+cbz            // Compare and branch zero.
+cbnz           // Compare branch not zero.
+b.eq           // Branch if equal.
+b.ne           // Branch if not equal.
+b.lt           // Branch if less.
+b.gt           // Branch if greater.
+b.le           // Branch if less equal.
+b.ge           // Branch if greater equal.
+adr            // Load label address.
+adrp           // Load page address.
+movk           // Move keep bits.
+movn           // Move bitwise NOT.
+movz           // Move zero.
+bic            // Bit clear (AND NOT).
+bics           // Bit clear flags.
+csel           // Conditional select.
+cset           // Set based on condition.
+csinc          // Conditional select increment.
+csinv          // Conditional select invert.
+csneg          // Conditional select negate.
+ccmp           // Conditional compare.
+cinc           // Conditional increment.
+cinv           // Conditional invert.
+cneg           // Conditional negate.
+clz            // Count leading zeros.
+cls            // Count leading sign bits.
+adrp           // Load page address.
+ldp            // Load pair registers.
+stp            // Store pair registers.
+ldrb           // Load byte.
+ldrh           // Load halfword.
+ldrsh          // Load signed halfword.
+ldrsb          // Load signed byte.
+ldrsw          // Load signed word.
+ldpsw          // Load pair sign extend.
+strb           // Store byte.
+strh           // Store halfword.
+madd           // Multiply and add.
+msub           // Multiply and subtract.
+mul            // Multiply.
+neg            // Negate value.
+negs           // Negate set flags.
+sbc            // Subtract with carry.
+sbcs           // Subtract with carry flags.
+udiv           // Unsigned divide.
+sdiv           // Signed divide.
+smaddl         // Signed multiply add long.
+smulh          // Signed multiply high.
+smull          // Signed multiply long.
+umaddl         // Unsigned multiply add long.
+umulh          // Unsigned multiply high.
+umull          // Unsigned multiply long.
+extr           // Extract bits.
+rbit           // Reverse bits.
+rev            // Reverse byte order.
+rev16          // Reverse bytes halfword.
+rev32          // Reverse bytes word.
+ror            // Rotate right.
+tbnz           // Test bit branch not.
+tbz            // Test bit branch zero.
+tst            // Test bits.
+ubfiz          // Bitfield insert.
+ubfx           // Bitfield extract.
+eon            // Exclusive OR NOT.
+orn            // OR NOT.
+prfm           // Prefetch memory.
+svc            // Supervisor call.
+
+
+
