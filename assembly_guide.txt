@@ -4,7 +4,6 @@ Instead, there are instructions, directives, and pseudo-instructions. I’ll giv
 
 This is the “vocabulary” of ARM64 assembly.
 
-
 -------------------------------------
 
 
@@ -12,22 +11,23 @@ This is the “vocabulary” of ARM64 assembly.
 
 Instruction     Description
 
-mov     Move a value into a register (x0–x30).
+mov             Move a value into a register (x0–x30).
 
 Example: mov x0, 5
 
-ldr     Load a value from memory into a register.
+ldr             Load a value from memory into a register.
 
 Example: ldr x0, [x1]
-str     Store a value from a register into memory.
+
+str             Store a value from a register into memory.
 
 Example: str x0, [x1]
-adr     Load the address of a label into a register.
+
+adr             Load the address of a label into a register.
 
 Example: adr x0, msg
+
 ldrb / strb     Load/store 1 byte from memory
-
-
 
 ---
 
@@ -35,13 +35,15 @@ ldrb / strb     Load/store 1 byte from memory
 
 Instruction     Description
 
-add     Add two registers or a register + immediate.
+add             Add two registers or a register + immediate.
 
 Example: add x0, x1, x2
-sub     Subtract.
+
+sub             Subtract.
 
 Example: sub x0, x1, x2
-mul     Multiply (signed).
+
+mul             Multiply (signed).
 
 Example: mul x0, x1, x2
 
@@ -49,10 +51,8 @@ udiv / sdiv     Unsigned / signed division.
 
 Example: udiv x0, x1, x2
 
-msub    Multiply-subtract. x0 = x1*x2 - x3
-neg     Negate value
-
-
+msub            Multiply-subtract. x0 = x1*x2 - x3
+neg             Negate value
 
 ---
 
@@ -60,21 +60,20 @@ neg     Negate value
 
 Instruction     Description
 
-and     Bitwise AND
 
-orr     Bitwise OR
+and             Bitwise AND
 
-eor     Bitwise XOR
+orr             Bitwise OR
 
-lsl     Logical shift left
+eor             Bitwise XOR
 
-lsr     Logical shift right
+lsl             Logical shift left
 
-asr     Arithmetic shift right
+lsr             Logical shift right
 
-ror     Rotate right
+asr             Arithmetic shift right
 
-
+ror             Rotate right
 
 ---
 
@@ -82,33 +81,30 @@ ror     Rotate right
 
 Instruction     Description
 
-cmp     Compare two registers (sets condition flags)
 
-cmn     Compare negative (x + y) sets flags
+cmp             Compare two registers (sets condition flags)
 
-cbz     Compare to zero, branch if zero
+cmn             Compare negative (x + y) sets flags
 
-cbnz    Compare to zero, branch if not zero
+cbz             Compare to zero, branch if zero
+
+cbnz            Compare to zero, branch if not zero
 
 b.eq / beq      Branch if equal
 
-b.ne    Branch if not equal
+b.ne            Branch if not equal
 
-b.lt    Branch if less than
+b.lt            Branch if less than
 
-b.le    Branch if less or equal
+b.le            Branch if less or equal
 
-b.gt    Branch if greater than
+b.gt            Branch if greater than
 
-b.ge    Branch if greater or equal
-
-b       Unconditional branch
+b.ge            Branch if greater or equal
+b               Unconditional branch
 
 
 > Note: Conditional branches are how “if statements” are implemented in ARM64.
-
-
-
 
 ---
 
@@ -121,23 +117,20 @@ push / pop      Pseudo-instruction for saving/restoring registers (uses stp/ldp 
 stp / ldp       Store/load pair of registers to/from memory
 
 str / ldr       Single register load/store
-
-
-
 ---
 
 6. System / Exception / I/O Instructions
 
 Instruction     Description
 
-svc     Supervisor call (system call). Like syscall in x86.
+
+svc             Supervisor call (system call). Like syscall in x86.
 
 Example: svc 0 for Linux
 
-nop     No operation
+nop             No operation
 
-hlt     Halt processor (optional in some contexts)
-
+hlt             Halt processor (optional in some contexts)
 
 
 ---
@@ -161,7 +154,7 @@ You branch to them with b label or conditional branches.
 
 These aren’t instructions, they tell the assembler how to organize the program.
 
-Directive       Description
+Directive         Description
 
 
 .global           Make a label visible to linker (_start)
@@ -175,7 +168,6 @@ Directive       Description
 .word / .quad     Store 32-bit / 64-bit numbers
 
 
-
 ---
 
 9. Registers
@@ -187,7 +179,6 @@ sp                Stack pointer
 pc                Program counter (not directly accessible)
 
 flags are set by comparison/arith operations
-
 
 
 ---
@@ -227,53 +218,53 @@ Branches + comparisons = if statements
 Loops = labels + branches
 
 
-# ARM64 Assembly Cheat Sheet (AArch64)
-# Registers:
-# x0–x30: general-purpose 64-bit
-# sp: stack pointer
-# pc: program counter (read-only)
-# flags: status flags (set by cmp, add, sub, etc.)
+// ARM64 Assembly Cheat Sheet (AArch64)
+// Registers:
+// x0–x30: general-purpose 64-bit
+// sp: stack pointer
+// pc: program counter (read-only)
+// flags: status flags (set by cmp, add, sub, etc.)
 
-# 1. Data Movement
-mov x0, 5         # move immediate into register
-ldr x0, [x1]      # load 64-bit value from memory
-str x0, [x1]      # store 64-bit value to memory
-ldrb w0, [x1]     # load 1 byte
-strb w0, [x1]     # store 1 byte
-adr x0, label     # load address of label
+// 1. Data Movement
+mov x0, 5         // move immediate into register
+ldr x0, [x1]      // load 64-bit value from memory
+str x0, [x1]      // store 64-bit value to memory
+ldrb w0, [x1]     // load 1 byte
+strb w0, [x1]     // store 1 byte
+adr x0, label     // load address of label
 
-# 2. Arithmetic
-add x0, x1, x2    # x0 = x1 + x2
-sub x0, x1, x2    # subtraction
-mul x0, x1, x2    # multiply
-udiv x0, x1, x2   # unsigned division
-sdiv x0, x1, x2   # signed division
-neg x0, x1        # negate x1
+// 2. Arithmetic
+add x0, x1, x2    // x0 = x1 + x2
+sub x0, x1, x2    // subtraction
+mul x0, x1, x2    // multiply
+udiv x0, x1, x2   // unsigned division
+sdiv x0, x1, x2   // signed division
+neg x0, x1        // negate x1
 
-# 3. Bitwise / Logical
-and x0, x1, x2    # bitwise AND
-orr x0, x1, x2    # bitwise OR
-eor x0, x1, x2    # XOR
-lsl x0, x1, 3     # logical shift left
-lsr x0, x1, 3     # logical shift right
-asr x0, x1, 3     # arithmetic shift right
-ror x0, x1, 3     # rotate right
+// 3. Bitwise / Logical
+and x0, x1, x2    // bitwise AND
+orr x0, x1, x2    // bitwise OR
+eor x0, x1, x2    // XOR
+lsl x0, x1, 3     // logical shift left
+lsr x0, x1, 3     // logical shift right
+asr x0, x1, 3     // arithmetic shift right
+ror x0, x1, 3     // rotate right
 
-# 4. Comparison / Conditional Branch
-cmp x0, x1        # compare, sets flags
-cbz x0, label     # branch if zero
-cbnz x0, label    # branch if not zero
-beq label         # branch if equal
-bne label         # branch if not equal
-blt label         # branch if less than
-ble label         # branch if less or equal
-bgt label         # branch if greater than
-bge label         # branch if greater or equal
-b label           # unconditional branch
+// 4. Comparison / Conditional Branch
+cmp x0, x1        // compare, sets flags
+cbz x0, label     // branch if zero
+cbnz x0, label    // branch if not zero
+beq label         // branch if equal
+bne label         // branch if not equal
+blt label         // branch if less than
+ble label         // branch if less or equal
+bgt label         // branch if greater than
+bge label         // branch if greater or equal
+b label           // unconditional branch
 
-# 5. Loops (example: sum 1..10)
-mov x0, 0         # sum
-mov x1, 1         # counter
+// 5. Loops (example: sum 1..10)
+mov x0, 0         // sum
+mov x1, 1         // counter
 loop:
     cmp x1, 11
     bge done
@@ -282,43 +273,43 @@ loop:
     b loop
 done:
 
-# 6. System Calls / I/O
-# Example: write message to stdout
+// 6. System Calls / I/O
+// Example: write message to stdout
 adr x1, msg
 mov x2, len
-mov x0, 1         # stdout
-mov x8, 64        # syscall write
+mov x0, 1         // stdout
+mov x8, 64        // syscall write
 svc 0
 
-# Exit
+// Exit
 mov x0, 0
-mov x8, 93        # syscall exit
+mov x8, 93        // syscall exit
 svc 0
 
-# 7. Assembler Directives
-.global _start       # visible to linker
-.section .text       # code section
-.section .data       # initialized data
-.section .bss        # uninitialized data
-.ascii "Hello"       # store text
-.asciz "Hello\0"     # null-terminated string
-.skip 32             # reserve bytes
-.word 123            # 32-bit number
-.quad 123            # 64-bit number
+// 7. Assembler Directives
+.global _start       // visible to linker
+.section .text       // code section
+.section .data       // initialized data
+.section .bss        // uninitialized data
+.ascii "Hello"       // store text
+.asciz "Hello\0"     // null-terminated string
+.skip 32             // reserve bytes
+.word 123            // 32-bit number
+.quad 123            // 64-bit number
 
-# 8. Pseudo-instructions
-push {x0, x1}        # save registers (uses stp)
-pop {x0, x1}         # restore registers (uses ldp)
-movz x0, 0x1234      # move immediate to low bits
-movk x0, 0x5678      # keep high bits, move low
+// 8. Pseudo-instructions
+push {x0, x1}        // save registers (uses stp)
+pop {x0, x1}         // restore registers (uses ldp)
+movz x0, 0x1234      // move immediate to low bits
+movk x0, 0x5678      // keep high bits, move low
 
-# 9. Example If + Loop
+// 9. Example If + Loop
 mov x0, 0
 mov x1, 1
 loop2:
     cmp x1, 11
     bge end_loop
-    and x2, x1, 1    # example: only even numbers
+    and x2, x1, 1    // example: only even numbers
     cbz x2, skip
     add x0, x0, x1
 skip:
@@ -326,9 +317,8 @@ skip:
     b loop2
 end_loop:
 
-# 10. Summary
-# - if/else: cmp + conditional branch + optional b
-# - loops: label + cmp + conditional branch + b
-# - array access: ldr/str with base + offset
-# - print text: adr x1,label; mov x2,len; mov x0,1; mov x8,64; svc 0
-
+// 10. Summary
+// - if/else: cmp + conditional branch + optional b
+// - loops: label + cmp + conditional branch + b
+// - array access: ldr/str with base + offset
+// - print text: adr x1,label; mov x2,len; mov x0,1; mov x8,64; svc 0
