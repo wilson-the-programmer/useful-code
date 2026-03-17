@@ -1,4 +1,28 @@
+
+Assembler directives / pseudo-ops
+These are hints to the assembler, telling it how to organize code, reserve memory, or define data.
+They don’t generate CPU instructions themselves.
+
+
+
+.section      // Start a section (.text, .data, .bss)
+.text         // Code section
+.data         // Data section
+.bss          // Uninitialized data
+.global       // Make symbol visible outside file
+.word         // Define 32-bit value
+.byte         // Define byte
+.space        // Reserve memory
+.align        // Align memory
+.equ          // Define a constant
+
+
+------------------------------
+
+
 Instruction:            Description:
+
+
 adc            // Add with carry.
 adcs           // Add with carry flags.
 add            // Add two values.
@@ -98,6 +122,8 @@ Most fundamental order
 
 
 Instruction:            Description:
+
+
 mov            // Move value.
 ldr            // Load from memory.
 str            // Store register.
