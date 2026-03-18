@@ -1,3 +1,218 @@
+
+Assembler directives / pseudo-ops
+These are hints to the assembler, telling it how to organize code, reserve memory, or define data.
+They don’t generate CPU instructions themselves.
+
+
+
+.section      // Start a section (.text, .data, .bss)
+.text         // Code section
+.data         // Data section
+.bss          // Uninitialized data
+.global       // Make symbol visible outside file
+.word         // Define 32-bit value
+.byte         // Define byte
+.space        // Reserve memory
+.align        // Align memory
+.equ          // Define a constant
+
+
+------------------------------
+
+
+Instruction:            Description:
+
+
+adc            // Add with carry.
+adcs           // Add with carry flags.
+add            // Add two values.
+adds           // Add and set flags.
+adr            // Load label address.
+adrp           // Load page address.
+and            // Bitwise AND.
+ands           // AND and set flags.
+asr            // Arithmetic shift right.
+b              // Unconditional branch.
+b.eq           // Branch if equal.
+b.ne           // Branch if not equal.
+b.lt           // Branch if less.
+b.gt           // Branch if greater.
+b.le           // Branch if less equal.
+b.ge           // Branch if greater equal.
+bic            // Bit clear (AND NOT).
+bics           // Bit clear flags.
+bl             // Branch with link.
+blr            // Branch to register.
+br             // Branch to register address.
+cbz            // Compare and branch zero.
+cbnz           // Compare branch not zero.
+ccmp           // Conditional compare.
+cinc           // Conditional increment.
+cinv           // Conditional invert.
+clz            // Count leading zeros.
+cls            // Count leading sign bits.
+cmp            // Compare values.
+cneg           // Conditional negate.
+csel           // Conditional select.
+cset           // Set based on condition.
+csinc          // Conditional select increment.
+csinv          // Conditional select invert.
+csneg          // Conditional select negate.
+eor            // Exclusive OR.
+eon            // Exclusive OR NOT.
+extr           // Extract bits.
+ldp            // Load pair registers.
+ldpsw          // Load pair sign extend.
+ldr            // Load from memory.
+ldrb           // Load byte.
+ldrh           // Load halfword.
+ldrsb          // Load signed byte.
+ldrsh          // Load signed halfword.
+ldrsw          // Load signed word.
+lsl            // Logical shift left.
+lsr            // Logical shift right.
+madd           // Multiply and add.
+mneg           // Multiply negate.
+mov            // Move value.
+movk           // Move keep bits.
+movn           // Move bitwise NOT.
+movz           // Move zero.
+msub           // Multiply and subtract.
+mul            // Multiply.
+neg            // Negate value.
+negs           // Negate set flags.
+nop            // No operation.
+orn            // OR NOT.
+orr            // OR operation.
+prfm           // Prefetch memory.
+rbit           // Reverse bits.
+ret            // Return subroutine.
+rev            // Reverse byte order.
+rev16          // Reverse bytes halfword.
+rev32          // Reverse bytes word.
+ror            // Rotate right.
+sbc            // Subtract with carry.
+sbcs           // Subtract with carry flags.
+sdiv           // Signed divide.
+smaddl         // Signed multiply add long.
+smulh          // Signed multiply high.
+smull          // Signed multiply long.
+stp            // Store pair registers.
+str            // Store register.
+strb           // Store byte.
+strh           // Store halfword.
+sub            // Subtract.
+subs           // Subtract set flags.
+svc            // Supervisor call.
+tbnz           // Test bit branch not.
+tbz            // Test bit branch zero.
+tst            // Test bits.
+ubfiz          // Bitfield insert.
+ubfx           // Bitfield extract.
+udiv           // Unsigned divide.
+umaddl         // Unsigned multiply add long.
+umulh          // Unsigned multiply high.
+umull          // Unsigned multiply long.
+uxtb           // Unsigned extend byte.
+uxth           // Unsigned extend halfword.
+
+
+
+Most fundamental order
+
+
+Instruction:            Description:
+
+
+mov            // Move value.
+ldr            // Load from memory.
+str            // Store register.
+add            // Add two values.
+sub            // Subtract.
+cmp            // Compare values.
+b              // Unconditional branch.
+bl             // Branch with link.
+ret            // Return subroutine.
+ands           // AND and set flags.
+and            // Bitwise AND.
+orr            // OR operation.
+eor            // Exclusive OR.
+adds           // Add and set flags.
+subs           // Subtract set flags.
+lsl            // Logical shift left.
+lsr            // Logical shift right.
+asr            // Arithmetic shift right.
+nop            // No operation.
+cbz            // Compare and branch zero.
+cbnz           // Compare branch not zero.
+b.eq           // Branch if equal.
+b.ne           // Branch if not equal.
+b.lt           // Branch if less.
+b.gt           // Branch if greater.
+b.le           // Branch if less equal.
+b.ge           // Branch if greater equal.
+adr            // Load label address.
+adrp           // Load page address.
+movk           // Move keep bits.
+movn           // Move bitwise NOT.
+movz           // Move zero.
+bic            // Bit clear (AND NOT).
+bics           // Bit clear flags.
+csel           // Conditional select.
+cset           // Set based on condition.
+csinc          // Conditional select increment.
+csinv          // Conditional select invert.
+csneg          // Conditional select negate.
+ccmp           // Conditional compare.
+cinc           // Conditional increment.
+cinv           // Conditional invert.
+cneg           // Conditional negate.
+clz            // Count leading zeros.
+cls            // Count leading sign bits.
+adrp           // Load page address.
+ldp            // Load pair registers.
+stp            // Store pair registers.
+ldrb           // Load byte.
+ldrh           // Load halfword.
+ldrsh          // Load signed halfword.
+ldrsb          // Load signed byte.
+ldrsw          // Load signed word.
+ldpsw          // Load pair sign extend.
+strb           // Store byte.
+strh           // Store halfword.
+madd           // Multiply and add.
+msub           // Multiply and subtract.
+mul            // Multiply.
+neg            // Negate value.
+negs           // Negate set flags.
+sbc            // Subtract with carry.
+sbcs           // Subtract with carry flags.
+udiv           // Unsigned divide.
+sdiv           // Signed divide.
+smaddl         // Signed multiply add long.
+smulh          // Signed multiply high.
+smull          // Signed multiply long.
+umaddl         // Unsigned multiply add long.
+umulh          // Unsigned multiply high.
+umull          // Unsigned multiply long.
+extr           // Extract bits.
+rbit           // Reverse bits.
+rev            // Reverse byte order.
+rev16          // Reverse bytes halfword.
+rev32          // Reverse bytes word.
+ror            // Rotate right.
+tbnz           // Test bit branch not.
+tbz            // Test bit branch zero.
+tst            // Test bits.
+ubfiz          // Bitfield insert.
+ubfx           // Bitfield extract.
+eon            // Exclusive OR NOT.
+orn            // OR NOT.
+prfm           // Prefetch memory.
+svc            // Supervisor call.
+
+-------------------------------------
+
 In ARM64 (AArch64) assembly, there aren’t “keywords” like in Python or C.
 
 Instead, there are instructions, directives, and pseudo-instructions. I’ll give you a structured list with explanations for the most common ones.
