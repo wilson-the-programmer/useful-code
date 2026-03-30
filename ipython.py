@@ -26,6 +26,12 @@ CYAN = "\033[1;38;2;0;255;255m"
 GREY = "\033[1;38;2;190;190;190m"
 RESET = "\033[0m"
 
+os.system("clear")
+sleep(1)
+print(f"\n\n{ORANGE}======[{CYAN} Ipython
+{YELLOW}Plus {ORANGE}]======{RESET}\n\n\n")
+sleep(1)
+
 while True:
     try:
         prompt_text = ">>> " if not buffer else "... "
