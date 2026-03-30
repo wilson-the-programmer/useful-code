@@ -22,14 +22,14 @@ empty_commands = 0
 
 WHITE = "\033[1;38;2;255;255;255m"
 YELLOW = "\033[1;38;2;255;255;0m"
+ORANGE = "\033[1;38;2;255;165;0m"
 CYAN = "\033[1;38;2;0;255;255m"
 GREY = "\033[1;38;2;190;190;190m"
 RESET = "\033[0m"
 
 os.system("clear")
-sleep(1)
-print(f"\n\n{ORANGE}======[{CYAN} Ipython
-{YELLOW}Plus {ORANGE}]======{RESET}\n\n\n")
+
+print(f"\n\n{ORANGE}======[{CYAN} Ipython {YELLOW}Plus {ORANGE}]======{RESET}\n\n\n")
 sleep(1)
 
 while True:
@@ -37,12 +37,21 @@ while True:
         prompt_text = ">>> " if not buffer else "... "
         line = session.prompt(prompt_text)
 
-        if line == "bash":
+        if line.strip() == "bash":
             os.system("bash")
             continue
-        if line == "q":
+
+        if line.strip() == "q":
             break
 
+
+        if line.startswith("%view") or line.startswith("%cat"):
+            parts = line.split(maxsplit=1)
+            if len(parts) == 2:
+                filename = parts[1]
+
+                os.system(f"cat {filename}")
+                continue
 
         # ----- %edit support -----
         if line.startswith("%edit") or line.startswith("%nano"):
@@ -67,6 +76,8 @@ while True:
                 ext = filename.split(".")[-1].lower()
                 if ext == "py":
                     os.system(f"python3 {filename}")
+                if ext == "sh":
+                    os.system(f"chmod +x {filename} && bash {filename}")
                 elif ext == "c":
                     # Use tempfile for C compilation
                     with tempfile.NamedTemporaryFile(delete=False) as tmp:
