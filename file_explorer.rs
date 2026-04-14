@@ -1,3 +1,24 @@
+/*
+
+file_explorer/Cargo.toml 👇 
+
+[package]
+name = "file_explorer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ratatui = "0.26"
+crossterm = "0.27"
+dirs = "6.0.0"
+
+*/
+
+
+// file_explorer/src/main.rs 👇 
+
+
+
 use std::fs;
 use std::io;
 use std::path::PathBuf;
