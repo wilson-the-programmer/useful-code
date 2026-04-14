@@ -1,6 +1,6 @@
 /*
 
-file_explorer/Cargo.toml 👇 
+~/file_explorer/Cargo.toml 👇 
 
 [package]
 name = "file_explorer"
@@ -15,7 +15,7 @@ dirs = "6.0.0"
 */
 
 
-// file_explorer/src/main.rs 👇 
+// ~/file_explorer/src/main.rs 👇 
 
 
 
