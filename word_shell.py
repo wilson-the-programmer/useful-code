@@ -99,5 +99,6 @@ while True:
                 print(f"{LIGHT_GREY}--------------------{RESET}")
                 time.sleep(0.15)
     else:
-        print(f"{LIGHT_GREY}No definition found.\n")
+        print(f"{LIGHT_GREY}No definitio
+ns found for '{searched_word}'.{RESET}")
 
