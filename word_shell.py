@@ -99,4 +99,5 @@ while True:
                 print(f"{LIGHT_GREY}--------------------{RESET}")
                 time.sleep(0.15)
     else:
-        print(f"{LIGHT_GREY}No definitio
+        print(f"{LIGHT_GREY}No definition found.\n")
+
