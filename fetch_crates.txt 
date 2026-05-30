@@ -14,3 +14,13 @@ rand = "0.8"
 clap = { version = "4.4", features = ["derive"] }
 anyhow = "1.0"
 thiserror = "1.0"
+
+# Additional "low-level / systems" crates Ken Thompson might use
+byteorder = "1.5"
+bitflags = "2.11.1"
+walkdir = "2.3"
+tempfile = "3.6"
+libc = "0.2"
+nix = "0.27"
+nom = "8.0.0"
+tracing = "0.1"
