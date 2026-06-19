@@ -48,7 +48,7 @@ unix_words = ["ls", "cat", "cp", "mv", "rm", "mkdir", "rmdir", "pwd", "cd", "ech
 
 
 
-"""
+
 
 def search_from_cursor():
     widget = root.focus_get()
@@ -92,7 +92,13 @@ def search_selected():
     except:
         pass
         
-"""
+
+def undo_last():
+    try:
+        editor.edit_undo()
+    except:
+        pass
+
 
 def redo_last():
     try:
@@ -815,15 +821,15 @@ def web_browser():
     menubar.add_cascade(label="File", menu=file_menu)
     file_menu.add_command(label="Open File", command=open_file)
     file_menu.add_command(label="Save", command=save_file)
-    file_menu.add_command(label="Edit Mode", command=edit_mode)
-    file_menu.add_command(label="Read Only", command=read_only)
+    file_menu.add_command(label="Edit Mode", command=lambda: webpage_viewer.config(state=tk.NORMAL))
+    file_menu.add_command(label="Read Only", command=lambda: webpage_viewer.config(state=tk.DISABLED))
     
     file_menu.add_command(label="Select All & Copy", command=select_all_copy)
-    #file_menu.add_command(label="Search from Cursor", command=search_from_cursor)
+    
     file_menu.add_separator()
     file_menu.add_command(label="Exit", command=lambda: browser_root.destroy())
     
-    """
+    
     web_menu = tk.Menu(
         menubar,
         tearoff=0,
@@ -833,7 +839,9 @@ def web_browser():
 
     menubar.add_cascade(label="Web", menu=web_menu)
     web_menu.add_command(label="Chrome Selected Text", command=search_selected)
-    """
+    web_menu.add_command(label="Search From Cursor", command=search_from_cursor)
+    
+    
     
     
     
@@ -1245,6 +1253,10 @@ def format_flake8():
 
 
 
+
+
+
+        
 
 root = tk.Tk()
 root.title("Python IDE")
