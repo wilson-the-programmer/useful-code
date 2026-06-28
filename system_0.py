@@ -1313,7 +1313,7 @@ file_menu.add_command(label="Line Number", command=goto_line_num)
 
 file_menu.add_command(label="Top↑", command=go_to_top)
 
-file_menu.add_command(label="Botto.↓", command=go_to_bottom)
+file_menu.add_command(label="Bottom↓", command=go_to_bottom)
 
 
 
@@ -1511,5 +1511,4 @@ editor.focus_set()
 editor.bind("<Return>", auto_indent)
 
 root.mainloop()
-
 
