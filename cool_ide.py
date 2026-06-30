@@ -204,15 +204,19 @@ def view_html():
 @app.route("/run_python", methods=["POST"])
 def run_python():
     code = request.form.get("code", "")
-    buffer = io.StringIO()
-    sys.stdout = buffer
+
     try:
-        exec(code)
-    except Exception as e:
-        print(f"{type(e).__name__}: {e}")
-    finally:
-        sys.stdout = sys.__stdout__
-    return buffer.getvalue()
+        result = subprocess.run(
+            ["python3", "-I", "-c", code],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=5
+        )
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        return "Error: execution timed out"
+
 
 @app.route("/run_rust", methods=["POST"])
 def run_rust():
