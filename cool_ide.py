@@ -1,11 +1,10 @@
-# Awesome Flask IDE 
-
 from flask import Flask, request
 import subprocess
 import tempfile
 import os
 import io
-import sys                                 
+import sys
+
 app = Flask(__name__)
 
 saved_html = "<h1>No HTML loaded</h1>"
@@ -217,27 +216,19 @@ def view_html():
 def run_python():
     code = request.form.get("code", "")
 
-    try:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".py")
-        tmp.write(code.encode())
-        tmp.close()
+    result = subprocess.run(
+        ["python3", "-q", "-c", code],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=5
+    )
 
-        result = subprocess.run(
-            ["python3", tmp.name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            timeout=5
-        )
+    if result.returncode != 0:
+        return result.stderr.splitlines()[-1]
 
-        return result.stdout
+    return result.stdout
 
-    except subprocess.TimeoutExpired:
-        return "Error: execution timed out"
-
-    finally:
-        if os.path.exists(tmp.name):
-            os.remove(tmp.name)
 
 
 @app.route("/run_rust", methods=["POST"])
@@ -301,4 +292,3 @@ def run_unix():
 
 if __name__ == "__main__":
     app.run(port=8700)
-
