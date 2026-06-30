@@ -42,9 +42,128 @@ from deep_translator import GoogleTranslator
 from transliterate import translit
 
 
-c_keywords = ["auto","break","case","char","const","continue","default","do","double","else","enum","extern","float","for","goto","if","inline","int","long","register","restrict","return","short","signed","sizeof","static","struct","switch","typedef","union","unsigned","void","volatile","while"]
+c_keywords = ["auto","break","case","char","const","continue","default","do","double","else","enum","extern","float","for","goto","if","inline","int","long","register","restrict","return","short","signed","sizeof","static","struct","switch","typedef","union","unsigned","void","volatile","while", "public",
+    "alignas",
+    "alignof",
+    "and",
+    "and_eq",
+    "asm",
+    "auto",
+    "bitand",
+    "bitor",
+    "bool",
+    "break",
+    "case",
+    "catch",
+    "char",
+    "char8_t",
+    "char16_t",
+    "char32_t",
+    "class",
+    "compl",
+    "const",
+    "consteval",
+    "constexpr",
+    "const_cast",
+    "continue",
+    "decltype",
+    "default",
+    "delete",
+    "do",
+    "double",
+    "dynamic_cast",
+    "else",
+    "enum",
+    "explicit",
+    "export",
+    "extern",
+    "false",
+    "float",
+    "for",
+    "friend",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "mutable",
+    "namespace",
+    "new",
+    "noexcept",
+    "not",
+    "not_eq",
+    "nullptr",
+    "operator",
+    "or",
+    "or_eq",
+    "private",
+    "protected",
+    "public",
+    "register",
+    "reinterpret_cast",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "static_assert",
+    "static_cast",
+    "struct",
+    "switch",
+    "template",
+    "this",
+    "thread_local",
+    "throw",
+    "true",
+    "try",
+    "typedef",
+    "typeid",
+    "typename",
+    "union",
+    "unsigned",
+    "using",
+    "virtual",
+    "void",
+    "volatile",
+    "wchar_t",
+    "while",
+    "xor",
+    "xor_eq",
+    "print",
+    "(",
+    ")" "+",
+    "-",
+    "/",
+    "*",
+]
 
 unix_words = ["ls", "cat", "cp", "mv", "rm", "mkdir", "rmdir", "pwd", "cd", "echo", "touch", "clear", "whoami", "date", "cal", "grep", "find", "sort", "wc", "head", "tail", "less", "more", "gcc", "g++", "python", "python3", "flake8", "cpplint", "git", "make", "cmake", "ps", "top", "kill", "chmod", "chown"]
+
+
+font_styles = [
+    "Times New Roman",
+    "Ariel",
+    "TkDefault",
+    "Courier New",
+    "AndroidClock",
+    "Carrois Gothic SC",
+    "Coming Soon",
+    "Cutive Mono",
+    "Dancing Script",
+    "Droid Sans Mono",
+    "Noto Sans Gothic",
+    "Noto Sans Mono CJK JP",
+    "Noto Sans Mono CJK HK",
+    "Noto Serif CJK HK",
+    "Roboto",
+    "RobotoStatic",
+    "Source Sans Pro",
+    "Source Sans Pro SemiBold",
+]
+
+
+
+
 
 
 
@@ -160,55 +279,120 @@ def auto_indent(event=None):
 
 
 def highlight_code(event=None):
-    editor.tag_remove("kw", "1.0", "end")
-    editor.tag_remove("var", "1.0", "end")
-    editor.tag_remove("eq", "1.0", "end")
-    editor.tag_remove("num", "1.0", "end")
-    editor.tag_remove("str", "1.0", "end")
-    editor.tag_remove("call", "1.0", "end")
+    current_window = root.focus_get()
 
-    text = editor.get("1.0", "end-1c")
+    line = int(current_window.index("insert").split(".")[0])
+
+    first = max(1, line - 28)
+    last = line + 28
+
+    region_start = f"{first}.0"
+    region_end = f"{last}.end"
+
+    for tag in ("kw", "var", "eq", "num", "str", "call"):
+        current_window.tag_remove(tag, region_start, region_end)
+
+    text = current_window.get(region_start, region_end)
 
     for k in keyword.kwlist + c_keywords:
-        start = "1.0"
-        while True:
-            pos = editor.search(rf"\y{k}\y", start, stopindex="end", regexp=True)
-            if not pos:
-                break
-            end = f"{pos}+{len(k)}c"
-            editor.tag_add("kw", pos, end)
-            start = end
+        for m in re.finditer(rf"\b{re.escape(k)}\b", text):
+            s = current_window.index(f"{region_start}+{m.start()}c")
+            e = current_window.index(f"{region_start}+{m.end()}c")
+            current_window.tag_add("kw", s, e)
 
     for m in re.finditer(r"\b([A-Za-z_]\w*)\s*=", text):
-        start = f"1.0+{m.start(1)}c"
-        end = f"1.0+{m.end(1)}c"
-        editor.tag_add("var", start, end)
+        s = current_window.index(f"{region_start}+{m.start(1)}c")
+        e = current_window.index(f"{region_start}+{m.end(1)}c")
+        current_window.tag_add("var", s, e)
 
     for m in re.finditer(r"=", text):
-        p = f"1.0+{m.start()}c"
-        editor.tag_add("eq", p, f"{p}+1c")
+        s = current_window.index(f"{region_start}+{m.start()}c")
+        current_window.tag_add("eq", s, f"{s}+1c")
 
     for m in re.finditer(r"\b\d+(\.\d+)?\b", text):
-        start = f"1.0+{m.start()}c"
-        end = f"1.0+{m.end()}c"
-        editor.tag_add("num", start, end)
+        s = current_window.index(f"{region_start}+{m.start()}c")
+        e = current_window.index(f"{region_start}+{m.end()}c")
+        current_window.tag_add("num", s, e)
 
-    for m in re.finditer(r'".*?"|\'.*?\'', text):
-        start = f"1.0+{m.start()}c"
-        end = f"1.0+{m.end()}c"
-        editor.tag_add("str", start, end)
+    for m in re.finditer(r'"[^"\n]*"|\'[^\'\n]*\'', text):
+        s = current_window.index(f"{region_start}+{m.start()}c")
+        e = current_window.index(f"{region_start}+{m.end()}c")
+        current_window.tag_add("str", s, e)
 
     for m in re.finditer(r"\b([A-Za-z_]\w*)\(", text):
-        start = f"1.0+{m.start(1)}c"
-        end = f"1.0+{m.end(1)}c"
-        editor.tag_add("call", start, end)
+        s = current_window.index(f"{region_start}+{m.start(1)}c")
+        e = current_window.index(f"{region_start}+{m.end(1)}c")
+        current_window.tag_add("call", s, e)
 
-    editor.tag_config("kw", foreground="red")
-    editor.tag_config("var", foreground="#8B5A2B")
-    editor.tag_config("eq", foreground="#333333")
-    editor.tag_config("num", foreground="blue")
-    editor.tag_config("str", foreground="#E67300")
-    editor.tag_config("call", foreground="green")
+    current_window.tag_config("kw", foreground="red")
+    current_window.tag_config("var", foreground="#5c4fad")
+    current_window.tag_config("eq", foreground="darkred")
+    current_window.tag_config("num", foreground="#018a5c")
+    current_window.tag_config("str", foreground="#E67300")
+    current_window.tag_config("call", foreground="blue")
+    
+# for dark background
+def highlight_code_dark(event=None):
+    current_window = root.focus_get()
+
+    line = int(current_window.index("insert").split(".")[0])
+
+    first = max(1, line - 28)
+    last = line + 28
+
+    region_start = f"{first}.0"
+    region_end = f"{last}.end"
+
+    for tag in ("kw", "var", "eq", "num", "str", "call"):
+        current_window.tag_remove(tag, region_start, region_end)
+
+    text = current_window.get(region_start, region_end)
+
+    for k in keyword.kwlist + c_keywords:
+        for m in re.finditer(rf"\b{re.escape(k)}\b", text):
+            s = current_window.index(f"{region_start}+{m.start()}c")
+            e = current_window.index(f"{region_start}+{m.end()}c")
+            current_window.tag_add("kw", s, e)
+
+    for m in re.finditer(r"\b([A-Za-z_]\w*)\s*=", text):
+        s = current_window.index(f"{region_start}+{m.start(1)}c")
+        e = current_window.index(f"{region_start}+{m.end(1)}c")
+        current_window.tag_add("var", s, e)
+
+    for m in re.finditer(r"=", text):
+        s = current_window.index(f"{region_start}+{m.start()}c")
+        current_window.tag_add("eq", s, f"{s}+1c")
+
+    for m in re.finditer(r"\b\d+(\.\d+)?\b", text):
+        s = current_window.index(f"{region_start}+{m.start()}c")
+        e = current_window.index(f"{region_start}+{m.end()}c")
+        current_window.tag_add("num", s, e)
+
+    for m in re.finditer(r'"[^"\n]*"|\'[^\'\n]*\'', text):
+        s = current_window.index(f"{region_start}+{m.start()}c")
+        e = current_window.index(f"{region_start}+{m.end()}c")
+        current_window.tag_add("str", s, e)
+
+    for m in re.finditer(r"\b([A-Za-z_]\w*)\(", text):
+        s = current_window.index(f"{region_start}+{m.start(1)}c")
+        e = current_window.index(f"{region_start}+{m.end(1)}c")
+        current_window.tag_add("call", s, e)
+
+    current_window.tag_config("kw", foreground="#1fc7f5")
+    current_window.tag_config("var", foreground="#ecb696")
+    current_window.tag_config("eq", foreground="cyan")
+    current_window.tag_config("num", foreground="yellow")
+    current_window.tag_config("str", foreground="#9ddba0")
+    current_window.tag_config("call", foreground="#dbcf35")
+    
+    
+def highlight_detect(event=None):
+	if dark_screen:
+		highlight_code_dark()
+		editor.config(insertbackground="gold")
+	else:
+		highlight_code()
+		editor.config(insertbackground="darkred")
 
 def goto_line_selected(event=None):
     try:
@@ -246,14 +430,14 @@ def show_output(result):
     result_text = tk.Text(
         output_window,
         wrap="word",
-        font=("Courier New", 8),
+        font=("Courier New", 7),
         height=5,
-        bg="white",
-        fg="black",
+        bg="black",
+        fg="white",
         padx=8,
         pady=8,
         bd=2,
-        insertbackground="red",
+        insertbackground="yellow",
         insertwidth=6
     )
     result_text.pack(
@@ -262,25 +446,14 @@ def show_output(result):
     )
 
     result_text.insert("1.0", result)
-        
-    exit_button = tk.Button(
-        output_window,
-        text="Exit",
-        command=lambda: output_window.destroy(),
-        font=("Courier New", 8),
-        bd=5,
-        width=2,
-        bg="lightgrey",
-        fg="darkblue" 
-            
-    )
-        
-    exit_button.pack(side="left")
     
-    format_button = tk.Button(
+        
+
+    
+    ff8_button = tk.Button(
         output_window,
-        text="Format",
-        command=lambda: (root.geometry("460x300"), output_window.geometry("460x230+0+330"), format_flake8()),
+        text="FF8",
+        command=lambda: (output_window.geometry("460x330+0+500"), format_flake8(), highlight_code_dark(), result_text.config(state=tk.DISABLED)),
         font=("Courier New", 8),
         bd=5,
         width=2,
@@ -289,10 +462,72 @@ def show_output(result):
             
     )
         
-    format_button.pack(side="left")
+    ff8_button.pack(side="left")
+    
+    fcpplint_button = tk.Button(
+        output_window,
+        text="FCpp",
+        command=lambda: (output_window.geometry("460x330+0+500"), format_cpplint(), highlight_code_dark(), result_text.config(state=tk.DISABLED)),
+        font=("Courier New", 8),
+        bd=5,
+        width=2,
+        bg="lightcyan",
+        fg="darkblue" 
+            
+    )
+        
+    fcpplint_button.pack(side="left")
+    
+    
+    read_button = tk.Button(
+        output_window,
+        text="Read",
+        command=lambda: result_text.config(state=tk.DISABLED),
+        font=("Courier New", 8),
+        bd=5,
+        width=2,
+        bg="cyan",
+        fg="#000044" 
+            
+    )
+        
+    read_button.pack(side="left")
+    
+
+    edit_button = tk.Button(
+        output_window,
+        text="Edit",
+        command=lambda: result_text.config(state=tk.NORMAL),
+        font=("Courier New", 8),
+        bd=5,
+        width=2,
+        bg="blue",
+        fg="cyan" 
+            
+    )
+        
+    edit_button.pack(side="left")
+    
+    
+    exit_button = tk.Button(
+        output_window,
+        text="Exit",
+        command=lambda: output_window.destroy(),
+        font=("Courier New", 8),
+        bd=5,
+        width=2,
+        bg="#440000",
+        fg="red" 
+            
+    )
+        
+    exit_button.pack(side="left")
+    
+    
     result_text.focus_set()
+    
     	
-    output_window.bind("<Button-1>", goto_line_selected)
+    result_text.bind("<Button-1>", goto_line_selected)
 
 
 def run_python():
@@ -454,9 +689,9 @@ def expand_window():
 
         if window_expanded == 1:
             editor.config(height=10)
-            root.geometry("460x750+0+0")
+            root.geometry("460x790+0+0")
         else:
-            root.geometry("460x440+0+0")
+            root.geometry("460x470+0+0")
             editor.config(height=5)
 
     except:
@@ -898,7 +1133,7 @@ def highlight_line():
         tag = "cursor_line"
 
         w.tag_add(tag, line_start, line_end)
-        w.tag_config(tag, background="lightgreen", foreground="#003300")
+        w.tag_config(tag, background="yellow", foreground="black")
 
     except:
         pass
@@ -1008,7 +1243,200 @@ def compile_exe_c():
 
     threading.Thread(target=task, daemon=True).start()            
 
-              
+
+
+def compile_cpp():
+    def task():
+        global cpp_exe_path
+        try:
+            code = editor.get("1.0", "end-1c")
+
+            f = tempfile.NamedTemporaryFile(
+                delete=False, suffix=".cpp", mode="w", encoding="utf-8"
+            )
+            f.write(code)
+            f.close()
+
+            exe = f.name + ".out"
+
+            c = subprocess.run(
+                ["g++", f.name, "-o", exe], capture_output=True, text=True
+            )
+
+            if c.returncode != 0:
+                show_output(c.stderr)
+                if os.path.exists(f.name):
+                    os.unlink(f.name)
+                return
+
+            cpp_exe_path = exe
+            show_output("Compilation successful")
+
+            if os.path.exists(f.name):
+                os.unlink(f.name)
+
+        except:
+            pass
+
+    threading.Thread(target=task, daemon=True).start()
+
+
+
+def exe_compiled_cpp():
+    def task():
+        global cpp_exe_path
+        try:
+            if not cpp_exe_path or not os.path.exists(cpp_exe_path):
+                show_output("No compiled executable found")
+                return
+
+            r = subprocess.run([cpp_exe_path], capture_output=True, text=True)
+            show_output(r.stdout + r.stderr)
+
+        except:
+            pass
+
+    threading.Thread(target=task, daemon=True).start()
+
+
+
+
+def compile_and_execute_cpp(event=None):
+    current_widget = root.focus_get()
+    code = current_widget.get(1.0, tk.END)
+
+    exe_dir = "/data/data/ru.iiec.pydroid3/files"
+    exe_path = os.path.join(exe_dir, "cpp_out")
+
+    def compile():
+        try:
+            subprocess.run(
+                [
+                    "g++",
+                    "-x",
+                    "c++",
+                    "-o",
+                    exe_path,
+                    "-",
+                ],
+                input=code,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [exe_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+
+            show_output(result.stdout)
+
+        except subprocess.CalledProcessError as e:
+            show_output(e.output)
+
+    threading.Thread(target=compile).start()
+
+
+
+def run_cpplint():
+    def task():
+        try:
+            code = editor.get("1.0", "end-1c")
+
+            f = tempfile.NamedTemporaryFile(delete=False, suffix=".cpp", mode="w", encoding="utf-8")
+            f.write(code)
+            f.close()
+
+            compile_result = subprocess.run(
+                ["g++", "-fsyntax-only", f.name],
+                capture_output=True,
+                text=True
+            )
+
+            compile_output = (compile_result.stdout + compile_result.stderr).strip()
+
+            if compile_output:
+                show_output("COMPILER:\n" + compile_output)
+                os.unlink(f.name)
+                return
+
+            lint = subprocess.run(
+                ["cpplint", f.name],
+                capture_output=True,
+                text=True
+            )
+
+            lint_output = (lint.stdout + lint.stderr).strip()
+
+            if lint_output:
+                show_output("CPPLINT:\n" + lint_output)
+            else:
+                show_output("No issues found")
+
+            os.unlink(f.name)
+
+        except:
+            pass
+
+    threading.Thread(target=task, daemon=True).start()
+    
+
+
+def format_cpplint():
+    try:
+        current_window = root.focus_get()
+
+        text = current_window.get("1.0", "end")
+
+        grouped = {}
+        total = 0
+
+        for line in text.splitlines():
+
+            if line.startswith("Total errors found:"):
+                try:
+                    total = int(line.split(":")[1].strip())
+                except:
+                    pass
+                continue
+
+            m = re.search(r"(.+?):(\d+):\s+(.*?)\s+\[([^\]]+)\]\s+\[(\d+)\]", line)
+
+            if not m:
+                continue
+
+            line_number = int(m.group(2))
+            message = m.group(3)
+            category = m.group(4)
+
+            grouped.setdefault(line_number, []).append(f"{message} [{category}]")
+
+        output = []
+
+        output.append(f"Imperfections: {total}")
+        output.append("")
+
+        for line_number in sorted(grouped):
+            output.append(f"Line {line_number}:")
+            output.append("")
+
+            for msg in grouped[line_number]:
+                output.append(f"• {msg}")
+
+            output.append("")
+
+        current_window.delete("1.0", "end")
+        current_window.insert("1.0", "\n".join(output))
+
+    except:
+        pass
+
+
+
 def goto_line_num(event=None):
     try:
         line = simpledialog.askinteger("Go to line", "Enter line number:")
@@ -1067,6 +1495,67 @@ def cut_above(event=None):
 
     except:
         pass
+
+
+
+def color_line():
+    index = editor.index("insert")
+    line_start = index.split(".")[0] + ".0"
+
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+
+    color = f"#{r:02x}{g:02x}{b:02x}"
+
+    tag_name = "rand_line"
+
+    editor.tag_remove(tag_name, "1.0", "end")
+    editor.tag_add(tag_name, line_start, index)
+    editor.tag_config(tag_name, foreground=color)
+
+    editor.insert("end", f"\ncolor : {color}")
+    
+
+
+def invert_colors():
+    global dark_screen
+    widget = root.focus_get()
+
+    if not widget:
+        return
+
+    bg = widget.cget("bg")
+    fg = widget.cget("fg")
+
+    widget.config(bg=fg, fg=bg)
+    
+    
+    dark_screen = not dark_screen
+    
+    if dark_screen:
+    	highlight_code_dark()
+    else:
+    	highlight_code()
+
+
+def set_font_size():
+    widget = root.focus_get()
+
+    if not widget:
+        return
+
+    size = simpledialog.askinteger(
+        "Font Size",
+        "Enter font size (5-15):",
+        minvalue=5,
+        maxvalue=15
+    )
+
+    if size is None:
+        return
+
+    widget.config(font=("Courier New", size))
 
 
 
@@ -1253,28 +1742,65 @@ def format_flake8():
 
 
 
+def random_font():
+    w = root.focus_get()
+    new_font = random.choice(font_styles)
+    w.config(font=(new_font, 8))
+    show_output(f"{new_font}")
 
 
 
+def grey_theme():
+    root.config(bg="#abe1da")
+    menu_bar.config(bg="#c7dddf", fg="#1f280a")
+    top_window.config(bg="#adb4c0", fg="#1a024b")
+    
+    
+    top_window.config(insertbackground="darkgrey")
+    
+def bash_theme():
+    root.config(bg="#b1fbce")
+    menu_bar.config(
+      bg="#b2cfcb", 
+      fg="#191218"
+    )
+    top_window.config(
+      bg="black", 
+      fg="white"
+    )
+    
+    
+    top_window.config(insertbackground="orange")
+
+
+def sky_theme():
+    root.config(bg="#b8d7dd")
+    menu_bar.config(bg="#e3b09c", fg="#3c0b47")
+    top_window.config(bg="#a9fdf4", fg="#1c0e15")
+    
+    top_window.config(insertbackground="darkred")
+    
+
+dark_screen = True
         
 
 root = tk.Tk()
 root.title("Python IDE")
 root.config(bg="white")
-root.geometry("460x440+0+0")
+root.geometry("460x470+0+0")
 editor = tk.Text(
     root,
     wrap="word",
-    font=("Courier New", 8),
+    font=("Droid Sans Mono", 7),
     undo=True,
     height=5,
     bd=5,
     padx=8,
     pady=8,
-    bg="white",
-    fg="black",
+    bg="black",
+    fg="white",
     insertwidth=6,
-    insertbackground="darkred"
+    insertbackground="gold"
 )
 editor.pack(
     expand=True,
@@ -1306,16 +1832,19 @@ menubar.add_cascade(label="File", menu=file_menu)
 file_menu.add_command(label="New (Blank Page)", command=clear_editor)
 
 file_menu.add_command(label="Open File", command=open_file)
+
 file_menu.add_command(label="Save", command=save_file)
 
 
-file_menu.add_command(label="Line Number", command=goto_line_num)
+
+
+file_menu.add_command(label="Font Size", command=set_font_size)
+
+file_menu.add_command(label="Random Font", command=random_font)
 
 file_menu.add_command(label="Top↑", command=go_to_top)
 
 file_menu.add_command(label="Bottom↓", command=go_to_bottom)
-
-
 
 
 file_menu.add_command(label="Read Only", command=read_only)
@@ -1373,12 +1902,18 @@ menubar.add_cascade(label="Dev", menu=dev_menu)
 
 dev_menu.add_command(label="C >", command=compile_exe_c)
 
+dev_menu.add_command(label="Compile C++", command=compile_cpp)
+
+dev_menu.add_command(label="Run Compiled C++", command=exe_compiled_cpp)
+
 
 dev_menu.add_command(label="Unix Command >", command=unix_command)
 
 dev_menu.add_command(label="Python >", command=run_python)
 
 dev_menu.add_command(label="Run Flake8", command=run_flake8)
+
+dev_menu.add_command(label="Run Cpplint", command=run_cpplint)
 
 
 dev_menu.add_command(label="Highlight Code", command=highlight_code)
@@ -1411,6 +1946,12 @@ colors_menu.add_command(label="Editor Back", command=bg_color)
 
 colors_menu.add_command(label="Editor Fore", command=fg_color)
 
+colors_menu.add_command(label="Invert bg/fg", command=invert_colors)
+
+
+colors_menu.add_command(label="Color Line", command=color_line)
+
+
 colors_menu.add_command(label="Get Colors", command=get_colors)
 
 
@@ -1441,38 +1982,38 @@ view_button.pack(side="left")
 
 clear_button = tk.Button(
     root,
-    text="中国人",
+    text="Color",
     font=("Times", 8, "bold"),
     bg="white",
     fg="green",
     width=1,
     bd=6,
-    command=mandarin_translator
+    command=color_line
 )
 clear_button.pack(side="left")
 
 
 undo_button = tk.Button(
     root,
-    text="P >",
+    text="C++",
     font=("Times", 8, "bold"),
     bg="lightcyan",
     fg="darkblue",
     width=1,
     bd=6,
-    command=run_python
+    command=compile_and_execute_cpp
 )
 undo_button.pack(side="left")
 
 web_button = tk.Button(
     root,
-    text="Web",
+    text="P >",
     font=("Times", 8, "bold"),
     bg="blue",
     fg="lightcyan",
     width=1,
     bd=6,
-    command=web_browser
+    command=run_python
 )
 web_button.pack(side="left")
 
@@ -1509,6 +2050,11 @@ editor.focus_set()
 
 
 editor.bind("<Return>", auto_indent)
+
+editor.bind("<Button-1>", highlight_detect)
+
+editor.bind("<KeyRelease>", highlight_detect)
+
 
 root.mainloop()
 
