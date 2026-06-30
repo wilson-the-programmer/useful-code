@@ -3,8 +3,7 @@ import subprocess
 import tempfile
 import os
 import io
-import sys
-
+import sys                                 
 app = Flask(__name__)
 
 saved_html = "<h1>No HTML loaded</h1>"
@@ -31,8 +30,8 @@ body {
 .window {
     width: 95%;
     height: 245px;
-    font-size: 18px;
-    font-family: "Courier New";
+    font-size: 15px;
+    font-family: monospace;
     font-weight: bold;
     border: 3px solid black;
     border-radius: 4px;
@@ -78,6 +77,17 @@ body {
     transform: scale(0.96);
     background: #111827;
 }
+
+html, body {
+    overscroll-behavior: none;
+}
+
+
+body {
+    overscroll-behavior-y: contain;
+}
+
+
 </style>
 
 <script>
@@ -279,3 +289,4 @@ def run_unix():
 
 if __name__ == "__main__":
     app.run(port=8700)
+
