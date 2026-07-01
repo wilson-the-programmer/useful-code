@@ -24,7 +24,7 @@ body {
     flex-direction: column;
     align-items: center;
     font-family: Arial;
-    background: gold;
+    background: lightblue;
     padding-top: 14px;
 }
 
@@ -189,11 +189,11 @@ function runUnix() {
 <div id="editor" class="window" contenteditable="true"></div>
 
 <div id="buttonRow">
-    <button class="btn" onclick="runUnix()">Unix</button>
-    <button class="btn" onclick="runHTML()">HTML</button>
-    <button class="btn" onclick="runPython()">P ></button>
+    <button class="btn" onclick="runUnix()">Bash</button>
     <button class="btn" onclick="runRust()">Rust</button>
     <button class="btn" onclick="runGo()">Go ></button>
+    <button class="btn" onclick="runPython()">P ></button>
+    <button class="btn" onclick="runHTML()">HTML</button>
 </div>
 
 <div id="output" class="window"></div>
@@ -292,3 +292,4 @@ def run_unix():
 
 if __name__ == "__main__":
     app.run(port=8700)
+
