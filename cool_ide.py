@@ -2,8 +2,6 @@ from flask import Flask, request
 import subprocess
 import tempfile
 import os
-import io
-import sys
 
 app = Flask(__name__)
 
@@ -30,7 +28,6 @@ body {
 
 .window {
     width: 95%;
-    height: 445px;
     font-size: 15px;
     font-family: monospace;
     font-weight: bold;
@@ -44,21 +41,19 @@ body {
     overflow-y: auto;
 }
 
-#editor {
+#topWindow {
+    height: 300px;
     white-space: pre-wrap;
     outline: none;
 }
 
-
-#output {
+#bottomWindow {
+    height: 600px;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
     outline: none;
 }
-
-
-
 
 #buttonRow {
     width: 95%;
@@ -89,22 +84,19 @@ html, body {
     overscroll-behavior: none;
 }
 
-
 body {
     overscroll-behavior-y: contain;
 }
-
-
 </style>
 
 <script>
 
 function getCode() {
-    return document.getElementById("editor").innerText;
+    return document.getElementById("topWindow").innerText;
 }
 
 function insertAtCursor(text) {
-    const el = document.getElementById("editor");
+    const el = document.getElementById("topWindow");
     el.focus();
 
     const sel = window.getSelection();
@@ -140,7 +132,7 @@ function runPython() {
     })
     .then(r => r.text())
     .then(data => {
-        document.getElementById("output").innerText = data;
+        document.getElementById("bottomWindow").innerText = data;
     });
 }
 
@@ -154,7 +146,7 @@ function runRust() {
     })
     .then(r => r.text())
     .then(data => {
-        document.getElementById("output").innerText = data;
+        document.getElementById("bottomWindow").innerText = data;
     });
 }
 
@@ -168,7 +160,7 @@ function runGo() {
     })
     .then(r => r.text())
     .then(data => {
-        document.getElementById("output").innerText = data;
+        document.getElementById("bottomWindow").innerText = data;
     });
 }
 
@@ -192,7 +184,7 @@ function runUnix() {
 
 <body>
 
-<div id="editor" class="window" contenteditable="true"></div>
+<div id="topWindow" class="window" contenteditable="true"></div>
 
 <div id="buttonRow">
     <button class="btn" onclick="runUnix()">Bash</button>
@@ -202,7 +194,7 @@ function runUnix() {
     <button class="btn" onclick="runHTML()">HTML</button>
 </div>
 
-<div id="output" class="window" contenteditable="true"></div>
+<div id="bottomWindow" class="window" contenteditable="true"></div>
 
 </body>
 </html>
@@ -234,8 +226,6 @@ def run_python():
         return result.stderr.splitlines()[-1]
 
     return result.stdout
-
-
 
 @app.route("/run_rust", methods=["POST"])
 def run_rust():
