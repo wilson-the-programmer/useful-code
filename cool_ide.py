@@ -1,8 +1,3 @@
-
-"""
-Awesome Python Flask App that allows you to test code in five different languages.
-"""
-
 from flask import Flask, request
 import subprocess
 import tempfile
@@ -35,7 +30,7 @@ body {
 
 .window {
     width: 95%;
-    height: 245px;
+    height: 445px;
     font-size: 15px;
     font-family: monospace;
     font-weight: bold;
@@ -54,10 +49,16 @@ body {
     outline: none;
 }
 
+
 #output {
     white-space: pre-wrap;
-    overflow-y: auto;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    outline: none;
 }
+
+
+
 
 #buttonRow {
     width: 95%;
@@ -201,7 +202,7 @@ function runUnix() {
     <button class="btn" onclick="runHTML()">HTML</button>
 </div>
 
-<div id="output" class="window"></div>
+<div id="output" class="window" contenteditable="true"></div>
 
 </body>
 </html>
@@ -297,35 +298,3 @@ def run_unix():
 
 if __name__ == "__main__":
     app.run(port=8700)
-
-
-
-"""
-Description:
-
-
-• Run code for multiple languages: HTML, Python, Rust, Go, and Bash (Unix commands)  
-• In-browser editor (contenteditable) with one-click run buttons  
-• Live output pane and ability to open rendered HTML in a new tab  
-• Temporary-file execution for compiled languages (Rust/Go) and quick Python runs  
-• Fast demos and screenshots — no local setup required; ideal for teaching and short videos
-
-Cool IDE — a small Flask app that lets you paste code into a browser editor and run it for quick demos. Important: because the app runs in a browser-based environment (not a terminal), your code must NOT require stdin or use blocking sleep calls.
-
-Do not use interactive stdin or blocking time calls
-- Remove input()/sys.stdin/getpass calls — hardcode values instead.
-  Example:
-  - Instead of:
-    name = input("Name: ").strip()
-  - Use:
-    name = "Wilson"
-- Do not import/use time.sleep() or other blocking pause calls — remove them or replace with non-blocking host-page timers or event-driven logic.
-
-Why: the app executes snippets in a browser-hosted workflow where stdin and blocking pauses aren’t supported. These small changes keep demos reproducible and let your code run reliably in Cool IDE.
-
-Short caption (one line)
-Cool IDE — browser-based playground for quick Python/Rust/Go/Bash/HTML demos. Do not use input() or time.sleep(); hardcode values or use the page UI instead.
-
-"""
-
-
