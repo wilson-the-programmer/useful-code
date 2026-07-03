@@ -184,7 +184,7 @@ function runUnix() {
 
 <body>
 
-<div id="topWindow" class="window" contenteditable="true"></div>
+<div id="topWindow" class="window" contenteditable="true" spellcheck="false"></div>
 
 <div id="buttonRow">
     <button class="btn" onclick="runUnix()">Bash</button>
