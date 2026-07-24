@@ -8,7 +8,9 @@ import subprocess
 import random
 
 from kivy.config import Config
-Config.set("kivy", "window_softinput_mode", "pan")
+
+
+Config.set("kivy", "window_softinput_mode", "resize")
 
 from kivy.app import App
 from kivy.uix.codeinput import CodeInput
@@ -29,6 +31,9 @@ current_editor = None
 pygments_styles = ['abap', 'algol', 'algol_nu', 'arduino', 'autumn', 'bw', 'borland', 'coffee', 'colorful', 'default', 'dracula', 'emacs', 'friendly_grayscale', 'friendly', 'fruity', 'github-dark', 'gruvbox-dark', 'gruvbox-light', 'igor', 'inkpot', 'lightbulb', 'lilypond', 'lovelace', 'manni', 'material', 'monokai', 'murphy', 'native', 'nord-darker', 'nord', 'one-dark', 'paraiso-dark', 'paraiso-light', 'pastie', 'perldoc', 'rainbow_dash', 'rrt', 'sas', 'solarized-dark', 'solarized-light', 'staroffice', 'stata-dark', 'stata-light', 'tango', 'trac', 'vim', 'vs', 'xcode', 'zenburn']
 
 pygment_style = random.choice(pygments_styles)
+
+
+
 
 
 def random_style():
@@ -57,6 +62,41 @@ def set_console(text, error=False):
     editor_bottom.text = text
     editor_top.focus = True
 
+def unix_command(editor):
+    try:
+        line = editor.text.split("\n")[editor.cursor_row]
+
+        result = subprocess.run(
+            ["sh", "-c", line],
+            capture_output=True,
+            text=True
+        )
+
+        output = result.stdout + result.stderr
+
+        if output:
+            editor.text += "\n" + output.rstrip() + "\n"
+            editor_top.focus = True
+
+        return output
+
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
+
+
+def run_bash(source):
+    try:
+        result = subprocess.run(
+            ["sh", "-c", source],
+            capture_output=True,
+            text=True
+        )
+
+        return result.stdout + result.stderr
+
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
+
 
 
 def run_python(source):
@@ -68,8 +108,11 @@ def run_python(source):
 
         return output.getvalue()
 
-    except Exception:
-        return traceback.format_exc()
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
+        
+        
+        
 
 
 def run_compiled(source, language):
@@ -109,19 +152,7 @@ def run_compiled(source, language):
         return traceback.format_exc()
 
 
-def run_bash(source):
 
-    try:
-        result = subprocess.run(
-            ["sh", "-c", source],
-            capture_output=True,
-            text=True
-        )
-
-        return result.stdout + result.stderr
-
-    except Exception:
-        return traceback.format_exc()
 
 
 def execute_code(language):
@@ -158,7 +189,17 @@ def set_active(widget, focus):
     if focus:
         current_editor = widget
 
+"""
 
+
+Other good coding fonts:
+DejaVuSansMono.ttf
+LiberationMono-Regular.ttf
+SourceCodePro-Regular.ttf
+JetBrainsMono-Regular.ttf
+
+
+"""
 
 def create_ui():
 
@@ -180,12 +221,7 @@ def create_ui():
     )
 
 
-    python_button = Button(
-        text="Python",
-        font_size=36,
-        size_hint_x=None,
-        width=150
-    )
+
 
     c_button = Button(
         text="C >",
@@ -201,6 +237,13 @@ def create_ui():
         width=130
     )
 
+    unix_button = Button(
+        text="Unix",
+        font_size=36,
+        size_hint_x=None,
+        width=130
+    )
+
     bash_button = Button(
         text="Bash",
         font_size=36,
@@ -208,26 +251,31 @@ def create_ui():
         width=130
     )
     
-    style_button = Button(
-        text="Style",
+    python_button = Button(
+        text="Python",
         font_size=36,
         size_hint_x=None,
-        width=130
+        width=150
     )
+    
 
 
 
 
-    buttons.add_widget(python_button)
+
+    
     buttons.add_widget(c_button)
     buttons.add_widget(cpp_button)
+    
+    buttons.add_widget(unix_button)
     buttons.add_widget(bash_button)
-    buttons.add_widget(style_button)
+    buttons.add_widget(python_button)
 
 
     editor_top = CodeInput(
         lexer=PythonLexer(),
-        style_name="lightbulb",
+        font_name="RobotoMono-Regular.ttf",
+        style_name="material",
         font_size=32,
         padding=15,
         size_hint_y=0.22,
@@ -244,19 +292,22 @@ def create_ui():
         font_size=32,
         padding=15,
         size_hint_y=0.35,
-        foreground_color=(1, 1, 1, 1),
-        background_color=(0, 0, 0, 1),
+        background_color=(1, 1, 1, 1),
+        foreground_color=(0, 0, 0.4, 1),
         style_name="xcode",
         #readonly=True
     )
 
 
     current_editor = editor_top
+    
+    
+    #editor_top.bind(focus=lambda instance, value: print("TOP FOCUS:", value))
+    
+    
 
 
-    editor_top.bind(
-        focus=set_active
-    )
+    
 
 
     python_button.bind(
@@ -275,8 +326,8 @@ def create_ui():
         on_release=lambda x: execute_code("Bash")
     )
 
-    style_button.bind(
-        on_release=lambda x: random_style()
+    unix_button.bind(
+        on_release=lambda x: unix_command(editor_top)
     )
     
     
