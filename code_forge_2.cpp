@@ -29,10 +29,10 @@ public:
         : QSyntaxHighlighter(parent)
     {
         keywordFormat.setForeground(QColor("#FF0000"));
-        stringFormat.setForeground(QColor("#440000"));
-        numberFormat.setForeground(QColor("#000088"));
+        stringFormat.setForeground(QColor("#004400"));
+        numberFormat.setForeground(QColor("#0000B5"));
         commentFormat.setForeground(QColor("#00AA00"));
-        preprocessorFormat.setForeground(QColor("#444466"));
+        preprocessorFormat.setForeground(QColor("#333333"));
         functionFormat.setForeground(QColor("#0088FF"));
         typeFormat.setForeground(QColor("#00CCCC"));
     }
