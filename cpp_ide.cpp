@@ -61,11 +61,11 @@ int main(int argc, char *argv[])
     clearButton->setMinimumHeight(50);
 
     runButton->setStyleSheet(
-        "background-color: #FFFF00; color: #0000FF;"
+        "background-color: #00FFFF; color: #0000FF;"
     );
 
     clearButton->setStyleSheet(
-        "background-color: #FFFF00; color: #0000FF;"
+        "background-color: #440000; color: #FF0000;"
     );
 
     auto *splitter = new QSplitter(Qt::Vertical);
