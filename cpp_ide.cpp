@@ -35,16 +35,6 @@ int main(int argc, char *argv[])
     auto *editor = new QTextEdit;
     editor->setFont(QFont("Courier New", 11));
 
-    editor->setPlainText(
-        "#include <iostream>\n"
-        "\n"
-        "int main()\n"
-        "{\n"
-        "    std::cout << \"Hello from my IDE!\\n\";\n"
-        "    return 0;\n"
-        "}\n"
-    );
-
     auto *output = new QTextEdit;
     output->setReadOnly(true);
     output->setFont(QFont("Courier New", 11));
@@ -52,6 +42,7 @@ int main(int argc, char *argv[])
     auto *languageLabel = new QLabel("Language:");
 
     auto *languageBox = new QComboBox;
+    languageBox->setStyleSheet("font-size: 16px;");
 
     languageBox->addItem("C");
     languageBox->addItem("C++");
