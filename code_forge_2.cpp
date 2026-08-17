@@ -1,7 +1,12 @@
+/* This is a powerful IDE for multiple languages that I created using Chat GPT. */
+
+//  for bash shell function
+#include <qtermwidget6/qtermwidget.h>
+#include <QInputDialog>
 #include <QApplication>
 #include <QMainWindow>
 #include <QTextEdit>
-#include <QPushButton>
+#include <QPushButton> 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QSplitter>
@@ -285,17 +290,60 @@ private:
     }
 };
 
+
+
+void openBashShell()
+{
+    QTermWidget *terminal = new QTermWidget;
+
+    terminal->setShellProgram("/bin/bash");
+    terminal->setColorScheme("DarkPastels");
+    terminal->setTerminalFont(QFont("Monospace", 9));
+
+    terminal->resize(500, 400);
+    terminal->setAttribute(Qt::WA_DeleteOnClose);
+    terminal->setWindowTitle("Bash Shell");
+
+    terminal->show();
+}
+
+
+void findText(QTextEdit *editor)
+{
+    bool ok;
+
+    QString text = QInputDialog::getText(
+        nullptr,
+        "Find",
+        "Search for:",
+        QLineEdit::Normal,
+        "",
+        &ok
+    );
+
+    if (!ok || text.isEmpty())
+        return;
+
+    if (editor->find(text))
+    {
+        editor->ensureCursorVisible();
+        editor->setFocus();
+    }
+}
+
+
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
     QMainWindow window;
-    window.setWindowTitle(" ** Code Forge **");
+    window.setWindowTitle("C++ IDE");
     window.resize(500, 600);
 
     window.menuBar()->setStyleSheet(
-        "QMenuBar { font-size: 18px; }"
-        "QMenu { font-size: 18px; }"
+        "QMenuBar { font-size: 20px; }"
+        "QMenu { font-size: 20px; }"
     );
 
     auto *editor = new QTextEdit;
@@ -331,11 +379,11 @@ int main(int argc, char *argv[])
     clearButton->setMinimumHeight(50);
 
     runButton->setStyleSheet(
-        "background-color: #FFFF00; color: #0000FF;"
+        "background-color: #00FFFF; color: #000055;"
     );
 
     clearButton->setStyleSheet(
-        "background-color: #FFFF00; color: #0000FF;"
+        "background-color: #550000; color: #FF0000;"
     );
 
     auto *splitter = new QSplitter(Qt::Vertical);
@@ -343,7 +391,7 @@ int main(int argc, char *argv[])
     splitter->addWidget(editor);
     splitter->addWidget(output);
 
-    splitter->setSizes({400, 150});
+    splitter->setSizes({350, 150});
 
     auto *languageLayout = new QHBoxLayout;
 
@@ -376,6 +424,14 @@ int main(int argc, char *argv[])
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
     fileMenu->addAction(saveAsAction);
+    fileMenu->addAction("Find Text", [&]()
+{
+    findText(editor);
+});
+    fileMenu->addAction("Bash Shell", []()
+{
+    openBashShell();
+});
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
 
@@ -793,7 +849,7 @@ else if (language == "C++")
             file.close();
 
             window.setWindowTitle(
-                "*** Code Forge ***"
+                "** Code Forge **"
             );
         }
     );
@@ -831,7 +887,8 @@ else if (language == "C++")
             file.close();
 
             window.setWindowTitle(
-                "*** Code Forge ***"
+                "C++ IDE - " +
+                QFileInfo(fileName).fileName()
             );
         }
     );
@@ -849,3 +906,5 @@ else if (language == "C++")
 
     return app.exec();
 }
+
+       
