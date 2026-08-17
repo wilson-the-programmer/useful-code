@@ -1,5 +1,17 @@
 /* This is a powerful IDE for multiple languages that I created using Chat GPT. */
 
+/* To compile:
+  
+g++ code_forge_2.cpp -o code_forge_2 $(pkg-config --cflags --libs Qt6Widgets) -lqtermwidget6
+
+*/
+
+
+
+
+
+
+
 //  for bash shell function
 #include <qtermwidget6/qtermwidget.h>
 #include <QInputDialog>
