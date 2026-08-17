@@ -1,17 +1,5 @@
 /* This is a powerful IDE for multiple languages that I created using Chat GPT. */
 
-/* To compile:
-  
-g++ code_forge_2.cpp -o code_forge_2 $(pkg-config --cflags --libs Qt6Widgets) -lqtermwidget6
-
-*/
-
-
-
-
-
-
-
 //  for bash shell function
 #include <qtermwidget6/qtermwidget.h>
 #include <QInputDialog>
@@ -303,6 +291,31 @@ private:
 };
 
 
+void goToLine(QTextEdit *editor)
+{
+    bool ok;
+
+    int line = QInputDialog::getInt(
+        nullptr,
+        "Go To Line",
+        "Line number:",
+        1,
+        1,
+        editor->document()->blockCount(),
+        1,
+        &ok
+    );
+
+    if (!ok)
+        return;
+
+    QTextCursor cursor(editor->document()->findBlockByNumber(line - 1));
+
+    editor->setTextCursor(cursor);
+    editor->ensureCursorVisible();
+    editor->setFocus();
+}
+
 
 void openBashShell()
 {
@@ -386,9 +399,11 @@ int main(int argc, char *argv[])
 
     auto *runButton = new QPushButton("Run");
     auto *clearButton = new QPushButton("Clear");
+    auto *bashButton = new QPushButton("Bash");
 
     runButton->setMinimumHeight(50);
     clearButton->setMinimumHeight(50);
+    bashButton->setMinimumHeight(50); 
 
     runButton->setStyleSheet(
         "background-color: #00FFFF; color: #000055;"
@@ -397,7 +412,11 @@ int main(int argc, char *argv[])
     clearButton->setStyleSheet(
         "background-color: #550000; color: #FF0000;"
     );
-
+    
+    bashButton->setStyleSheet(
+        "background-color: #222222; color: #FFFFFF;"
+    );
+ 
     auto *splitter = new QSplitter(Qt::Vertical);
 
     splitter->addWidget(editor);
@@ -414,6 +433,13 @@ int main(int argc, char *argv[])
 
     buttonLayout->addWidget(runButton);
     buttonLayout->addWidget(clearButton);
+    buttonLayout->addWidget(bashButton);
+
+    QObject::connect(bashButton,
+    &QPushButton::clicked, [&]()
+    {
+        openBashShell();
+    });
 
     auto *layout = new QVBoxLayout;
 
@@ -436,14 +462,18 @@ int main(int argc, char *argv[])
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
     fileMenu->addAction(saveAsAction);
+    fileMenu->addAction("Go To Line", [&]()
+    {
+        goToLine(editor);
+    });
     fileMenu->addAction("Find Text", [&]()
-{
-    findText(editor);
-});
+    {
+        findText(editor);
+    });
     fileMenu->addAction("Bash Shell", []()
-{
-    openBashShell();
-});
+    {
+        openBashShell();
+    });
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
 
