@@ -1342,6 +1342,58 @@ Source Code URL :
 
 github.com/wilson-the-programmer/useful-code/blob/main/code_forge_4.cpp
 
+Code Forge — a compact Qt6-based IDE for fast prototyping and multi-language development. Edit code in a monospace editor, run or compile it from a single window, and switch the bottom pane between program output and an interactive embedded Bash terminal. Designed to keep edit → compile → test cycles tight so you can iterate quickly.
+
+Features
+
+- Multi-language support: C, C++, Bash, Go, Rust, Python3, JavaScript.
+
+- Smart syntax highlighting: language-aware QSyntaxHighlighter (keywords, strings, numbers, comments, functions, preprocessor lines).
+
+- Run & build in one click: writes source to a temporary directory and runs the appropriate toolchain (gcc/g++, rustc, go run, python3, node, bash).
+
+- Qt detection for C++: auto-adds pkg-config Qt6Widgets flags and can launch Qt GUI apps detached.
+
+- Embedded terminal: QTermWidget provides a full interactive Bash shell inside the IDE (or open a separate Bash window).
+
+- Bottom-pane output: captures stdout/stderr and shows program output in a dedicated pane.
+
+- Structural tools: Code Map and List Functions detect and list functions, classes, and includes for quick navigation.
+
+- Editor utilities: Search & Replace, Find, Go To Line, Show Cursor Position, Insert indentation shortcuts, Clear editor.
+
+- Temporary builds: uses QTemporaryDir so builds are isolated and cleaned up automatically.
+
+- Lightweight single-window layout: language selector, Run / Clear / Bash controls, and resizable editor/output split.
+
+Quick notes
+
+- Source & download:
+
+github.com/wilson-the-programmer/useful-code/blob/main/code_forge_4.cpp
+
+- App Dependencies or Requirements: 
+
+    Qt6 (qt6-base-dev), 
+    g++, 
+    pkg-config; 
+
+    install language toolchains (
+        rustc, 
+        golang,
+        python3,
+        nodejs
+    )
+
+    If you want the embedded terminal, install:
+
+        QTermWidget (libqtermwidget6-dev)
+
+- Ideal for: 
+
+demos, learning, quick experiments, and small projects where you want an integrated editor + terminal + build/run workflow.
+
+
 
 README — C++ Qt6 IDE
 
@@ -1362,6 +1414,7 @@ For Qt6 applications that use QTermWidget:
 g++ program.cpp -o program $(pkg-config --cflags --libs Qt6Widgets) -lqtermwidget6
 
 Additional tips:
+
 - Make sure g++ and pkg-config are installed.
 - Use Courier New or another monospace font for source code.
 - Keep Qt6 headers and libraries installed through Debian's package manager.
