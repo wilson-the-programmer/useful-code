@@ -27,6 +27,7 @@
 #include <QTextCharFormat>
 #include <QRegularExpression>
 #include <QColor>
+#include <QColorDialog>
 
 #include <QRegularExpression>
 #include <vector>
@@ -707,6 +708,121 @@ void insertFourSpaces(QTextEdit *editor)
 }
 
 
+void quickSave(QTextEdit *editor)
+{
+    QFile file("last_qt6_saved.txt");
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QTextStream stream(&file);
+    stream << editor->toPlainText();
+}
+
+void quickLoad(QTextEdit *editor)
+{
+    QFile file("last_qt6_saved.txt");
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QTextStream stream(&file);
+    editor->setPlainText(stream.readAll());
+}
+
+
+void changeEditorBackground(QTextEdit *editor, QWidget *parent)
+{
+    QColor color = QColorDialog::getColor(
+        editor->palette().base().color(),
+        parent,
+        "Editor Background"
+    );
+
+    if (!color.isValid())
+        return;
+
+    editor->setStyleSheet(
+        QString("background-color: %1;").arg(color.name())
+    );
+}
+
+void changeEditorForeground(QTextEdit *editor, QWidget *parent)
+{
+    QColor color = QColorDialog::getColor(
+        editor->palette().text().color(),
+        parent,
+        "Editor Foreground"
+    );
+
+    if (!color.isValid())
+        return;
+
+    editor->setStyleSheet(
+        QString("color: %1;").arg(color.name())
+    );
+}
+
+void changeEditorFontSize(QTextEdit *editor, QWidget *parent)
+{
+    bool ok;
+
+    int size = QInputDialog::getInt(
+        parent,
+        "Font Size",
+        "Enter font size:",
+        editor->font().pointSize(),
+        1,
+        100,
+        1,
+        &ok
+    );
+
+    if (!ok)
+        return;
+
+    QFont font = editor->font();
+    font.setPointSize(size);
+    editor->setFont(font);
+}
+
+
+void changeEditorFont(QTextEdit *editor, QWidget *parent)
+{
+    QStringList fonts;
+
+    fonts << "Courier New"
+          << "DejaVu Sans Mono"
+          << "Liberation Mono"
+          << "Noto Sans Mono"
+          << "Ubuntu Mono"
+          << "Source Code Pro"
+          << "JetBrains Mono"
+          << "Hack"
+          << "Fira Code";
+
+    bool ok;
+
+    QString fontName = QInputDialog::getItem(
+        parent,
+        "Editor Font",
+        "Choose font:",
+        fonts,
+        0,
+        false,
+        &ok
+    );
+
+    if (!ok)
+        return;
+
+    QFont font = editor->font();
+    font.setFamily(fontName);
+    editor->setFont(font);
+}
+
+
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -725,7 +841,9 @@ int main(int argc, char *argv[])
     );
 
     auto *editor = new QTextEdit;
-    editor->setFont(QFont("Courier New", 11));
+    editor->setFont(QFont("Hack", 10));
+    editor->setStyleSheet("background-color: #f0f5ff;");
+
 
     auto *highlighter = new CodeHighlighter(editor->document());
 
@@ -825,6 +943,15 @@ int main(int argc, char *argv[])
 
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
+    fileMenu->addAction("Quick Save", [&]()
+    {
+        quickSave(editor);
+    });
+
+    fileMenu->addAction("Quick Load", [&]()
+    {
+        quickLoad(editor);
+    });
     fileMenu->addAction("Search and Replace", [&]()
     {
         searchReplace(editor, &window);
@@ -872,6 +999,27 @@ int main(int argc, char *argv[])
     auto *runRustAction = new QAction("Run Rust", &window);
     auto *runPythonAction = new QAction("Run Python3", &window);
     auto *runJavaScriptAction = new QAction("Run JavaScript", &window);
+
+
+    devMenu->addAction("Background Color", [&]()
+    {
+        changeEditorBackground(editor, &window);
+    });
+
+    devMenu->addAction("Foreground Color", [&]()
+    {
+        changeEditorForeground(editor, &window);
+    });
+
+    devMenu->addAction("Font Size", [&]()
+    {
+        changeEditorFontSize(editor, &window);
+    });
+
+    devMenu->addAction("Font Style", [&]()
+    {
+        changeEditorFont(editor, &window);
+    });
 
     devMenu->addAction(runCAction);
     devMenu->addAction(runCppAction);
@@ -1334,108 +1482,5 @@ else if (language == "C++")
 
     return app.exec();
 }
-
-
-/*
-
-Source Code URL :
-
-github.com/wilson-the-programmer/useful-code/blob/main/code_forge_4.cpp
-
-Code Forge — a compact Qt6-based IDE for fast prototyping and multi-language development. Edit code in a monospace editor, run or compile it from a single window, and switch the bottom pane between program output and an interactive embedded Bash terminal. Designed to keep edit → compile → test cycles tight so you can iterate quickly.
-
-Features
-
-- Multi-language support: C, C++, Bash, Go, Rust, Python3, JavaScript.
-
-- Smart syntax highlighting: language-aware QSyntaxHighlighter (keywords, strings, numbers, comments, functions, preprocessor lines).
-
-- Run & build in one click: writes source to a temporary directory and runs the appropriate toolchain (gcc/g++, rustc, go run, python3, node, bash).
-
-- Qt detection for C++: auto-adds pkg-config Qt6Widgets flags and can launch Qt GUI apps detached.
-
-- Embedded terminal: QTermWidget provides a full interactive Bash shell inside the IDE (or open a separate Bash window).
-
-- Bottom-pane output: captures stdout/stderr and shows program output in a dedicated pane.
-
-- Structural tools: Code Map and List Functions detect and list functions, classes, and includes for quick navigation.
-
-- Editor utilities: Search & Replace, Find, Go To Line, Show Cursor Position, Insert indentation shortcuts, Clear editor.
-
-- Temporary builds: uses QTemporaryDir so builds are isolated and cleaned up automatically.
-
-- Lightweight single-window layout: language selector, Run / Clear / Bash controls, and resizable editor/output split.
-
-Quick notes
-
-- Source & download:
-
-github.com/wilson-the-programmer/useful-code/blob/main/code_forge_4.cpp
-
-- App Dependencies or Requirements: 
-
-    Qt6 (qt6-base-dev), 
-    g++, 
-    pkg-config; 
-
-    install language toolchains (
-        rustc, 
-        golang,
-        python3,
-        nodejs
-    )
-
-    If you want the embedded terminal, install:
-
-        QTermWidget (libqtermwidget6-dev)
-
-- Ideal for: 
-
-demos, learning, quick experiments, and small projects where you want an integrated editor + terminal + build/run workflow.
-
-
-
-README — C++ Qt6 IDE
-
-This IDE is designed for lightweight C++ and Qt6 development on Debian Linux. To install the required Qt6 development packages, run:
-
-sudo apt update && sudo apt install g++ pkg-config qt6-base-dev
-
-If the IDE uses QTermWidget for the embedded Bash terminal, also install:
-
-sudo apt install libqtermwidget6-0 libqtermwidget6-dev
-
-To compile a basic Qt6 application:
-
-g++ program.cpp -o program $(pkg-config --cflags --libs Qt6Widgets)
-
-For Qt6 applications that use QTermWidget:
-
-g++ program.cpp -o program $(pkg-config --cflags --libs Qt6Widgets) -lqtermwidget6
-
-Additional tips:
-
-- Make sure g++ and pkg-config are installed.
-- Use Courier New or another monospace font for source code.
-- Keep Qt6 headers and libraries installed through Debian's package manager.
-- Test Qt6 programs from the IDE or directly from the Bash terminal.
-- For Python execution, make sure python3 is installed.
-- For Bash programs, use the embedded terminal when interactive input is required.
-- Qt6 GUI applications should be launched as separate processes so they can open their own windows.
-
-IMPORTANT — Programming Languages and Tools
-
-Any programming language or development tool used with this IDE must be installed separately on the Debian system. The IDE runs the compilers and interpreters already available in the Debian terminal; it does not install them automatically. For example, C and C++ require gcc/g++, Python requires python3, Go requires golang, Rust requires rustc and cargo, JavaScript requires Node.js, and Bash is normally available through the Debian shell. If a language or compiler is not installed, programs written in that language will not run from the IDE.
-
-
-NOTE FOR VIEWERS
-
-The Linux environment used in the video is running through UserLAnd, an Android application that allows you to run Linux distributions on Android mobile devices. This IDE can also be compiled and run on other Linux environments, including a standard Debian installation. However, the version demonstrated in this video is specifically designed with mobile use in mind, so some of the interface dimensions and design choices are optimized for a smaller touchscreen rather than a traditional desktop computer.
-
-NOTE ABOUT USERLAND TIME
-
-If you are running this IDE through UserLAnd on an Android device, you may notice that the Linux environment sometimes reports a time that is a few hours ahead of your actual local time. For example, running the "date" command in the Bash terminal may display a different time than the Android system clock. This is a UserLAnd/Linux environment time configuration issue and does not affect the operation of the IDE itself.
-
-*/
 
        
