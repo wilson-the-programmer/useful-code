@@ -436,7 +436,7 @@ void showOutput(const QString &result)
 
     window->setWindowTitle("Program Output");
     window->resize(300, 300);
-    window->move(600, 100);
+    window->move(200, 100);
     window->setAttribute(Qt::WA_DeleteOnClose);
 
     auto *output = new QTextEdit;
@@ -701,6 +701,10 @@ void showCursorPosition(QTextEdit *editor, QTextEdit *output)
     );
 }
 
+void insertFourSpaces(QTextEdit *editor)
+{
+    editor->insertPlainText("    ");
+}
 
 
 int main(int argc, char *argv[])
@@ -712,12 +716,12 @@ int main(int argc, char *argv[])
     window.resize(500, 600);
     window.move(100, 50);
     window.setStyleSheet(
-        "QMainWindow { background-color: orange; }"
+        "QMainWindow { background-color: black; }"
     );
 
     window.menuBar()->setStyleSheet(
-        "QMenuBar { font-size: 20px; }"
-        "QMenu { font-size: 20px; }"
+        "QMenuBar { background-color: cyan; color: #000088; font-family: 'Courier New'; font-size: 20px; }"
+        "QMenu { background-color: #E1E1E1; color: blue; font-family: 'Courier New'; font-size: 18px; }"
     );
 
     auto *editor = new QTextEdit;
@@ -762,20 +766,20 @@ int main(int argc, char *argv[])
     auto *clearButton = new QPushButton("Clear");
     auto *bashButton = new QPushButton("Bash");
 
-    runButton->setMinimumHeight(50);
-    clearButton->setMinimumHeight(50);
-    bashButton->setMinimumHeight(50); 
+    runButton->setMinimumHeight(40);
+    clearButton->setMinimumHeight(40);
+    bashButton->setMinimumHeight(40); 
 
     runButton->setStyleSheet(
-        "background-color: #00FFFF; color: #000055;"
+        "background-color: #00FFFF; color: #000055; font-size: 20px; font-family: 'Courier New'"
     );
 
     clearButton->setStyleSheet(
-        "background-color: #550000; color: #FF0000;"
+        "background-color: #220000; color: #FF0000; font-size: 20px; font-family: 'Courier New';"
     );
     
     bashButton->setStyleSheet(
-        "background-color: #222222; color: #FFFFFF;"
+        "background-color: #222222; color: #FFFFFF; font-size: 20px; font-family: 'Courier New';"
     );
  
     auto *splitter = new QSplitter(Qt::Vertical);
