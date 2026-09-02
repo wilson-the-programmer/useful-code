@@ -1,3 +1,4 @@
+
 /* This is a powerful IDE for multiple languages that I created using Chat GPT. */
 
 //  for bash shell function
@@ -375,10 +376,10 @@ void openBashShell()
 
     terminal->setShellProgram("/bin/bash");
     terminal->setColorScheme("DarkPastels");
-    terminal->setTerminalFont(QFont("Monospace", 10));
+    terminal->setTerminalFont(QFont("Monospace", 15));
 
-    terminal->resize(400, 500);
-    terminal->move(200, 50);
+    terminal->resize(800, 600);
+    terminal->move(40, 30);
 
     terminal->setAttribute(Qt::WA_DeleteOnClose);
     terminal->setWindowTitle("Bash Shell");
@@ -612,7 +613,7 @@ void codeMapper(QTextEdit *editor, QTextEdit *output)
     QString result;
 
     result += "CODE MAP\n";
-    result += "──────────────────────────────\n\n";
+    result += "\n\n";
 
     result += "Functions\n";
 
@@ -667,21 +668,21 @@ int main(int argc, char *argv[])
     QMainWindow window;
     window.setWindowTitle("Code Machine");
 
-    window.resize(400, 550);
-    window.move(60, 20);
+    window.resize(900, 600);
+    window.move(20, 20);
     window.setStyleSheet(
-        "QMainWindow { background-color: cyan; }"
+        "QMainWindow { background-color: grey; }"
     );
  
     window.menuBar()->setStyleSheet(
-        "QMenuBar { background-color: black; color: #F1F1F1; font-family: 'Courier New'; font-size: 20px; }"
-        "QMenu { background-color: #F1F1F1; color: blue; font-family: 'Courier New'; font-size: 18px; }"
+        "QMenuBar { background-color: black; color: white; font-family: 'Courier New'; font-size: 27px; }"
+        "QMenu { background-color: white; color: black; font-family: 'Hack'; font-size: 22px; }"
     );
  
 
 
     auto *editor = new QTextEdit;
-    editor->setFont(QFont("Hack", 10));
+    editor->setFont(QFont("Hack", 14));
 
     auto *highlighter = new CodeHighlighter(editor->document());
 
@@ -689,7 +690,7 @@ int main(int argc, char *argv[])
 
     auto *output = new QTextEdit;
     //output->setReadOnly(true);
-    output->setFont(QFont("Hack", 11));
+    output->setFont(QFont("Hack", 14));
     
     auto *terminal = new QTermWidget;
     terminal->setShellProgram("/bin/bash");
@@ -704,7 +705,7 @@ int main(int argc, char *argv[])
     auto *languageLabel = new QLabel("Language:");
 
     auto *languageBox = new QComboBox;
-    languageBox->setStyleSheet("font-size: 16px;");
+    languageBox->setStyleSheet("font-size: 20px;");
 
     languageBox->addItem("C");
     languageBox->addItem("C++");
@@ -714,7 +715,7 @@ int main(int argc, char *argv[])
     languageBox->addItem("Python3");
     languageBox->addItem("JavaScript");
 
-    languageBox->setCurrentText("Python3");
+    languageBox->setCurrentText("Rust");
 
     auto *runButton = new QPushButton("Run");
     auto *clearButton = new QPushButton("Clear");
@@ -725,15 +726,15 @@ int main(int argc, char *argv[])
     bashButton->setMinimumHeight(40); 
 
     runButton->setStyleSheet(
-        "background-color: #222222; color: white; font-size: 20px; font-family: 'Courier New'"
+        "background-color: cyan; color: blue; font-size: 20px; font-family: 'Hack'"
     );
  
     clearButton->setStyleSheet(
-        "background-color: #220000; color: #FF0000; font-size: 20px; font-family: 'Courier New';"
+        "background-color: red; color: white; font-size: 20px; font-family: 'Courier New';"
     );
     
     bashButton->setStyleSheet(
-        "background-color: #222222; color: #FFFFFF; font-size: 20px; font-family: 'Courier New';"
+        "background-color: #222222; color: orange; font-size: 20px; font-family: 'Courier New';"
     );
 
  
@@ -742,7 +743,7 @@ int main(int argc, char *argv[])
     splitter->addWidget(editor);
     splitter->addWidget(bottomStack);
 
-    splitter->setSizes({250, 150});
+    splitter->setSizes({200, 150});
 
     auto *languageLayout = new QHBoxLayout;
 
