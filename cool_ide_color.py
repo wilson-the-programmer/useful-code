@@ -1,3 +1,4 @@
+
 from flask import Flask, request
 import subprocess
 import tempfile
@@ -134,6 +135,11 @@ function highlightCode() {
 
     let result = "";
 
+    if (!parts) {
+        editor.innerHTML = "";
+        return;
+    }
+
     for (let i = 0; i < parts.length; i++) {
         let token = parts[i];
 
@@ -217,6 +223,36 @@ function runPython() {
 }
 
 
+function runC() {
+    const code = getCode();
+
+    fetch("/run_c", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "code=" + encodeURIComponent(code)
+    })
+    .then(r => r.text())
+    .then(data => {
+        document.getElementById("bottomWindow").innerText = data;
+    });
+}
+
+
+function runCpp() {
+    const code = getCode();
+
+    fetch("/run_cpp", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "code=" + encodeURIComponent(code)
+    })
+    .then(r => r.text())
+    .then(data => {
+        document.getElementById("bottomWindow").innerText = data;
+    });
+}
+
+
 function runRust() {
     const code = getCode();
 
@@ -231,6 +267,7 @@ function runRust() {
     });
 }
 
+
 function runGo() {
     const code = getCode();
 
@@ -244,6 +281,22 @@ function runGo() {
         document.getElementById("bottomWindow").innerText = data;
     });
 }
+
+
+function runJavaScript() {
+    const code = getCode();
+
+    fetch("/run_javascript", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "code=" + encodeURIComponent(code)
+    })
+    .then(r => r.text())
+    .then(data => {
+        document.getElementById("bottomWindow").innerText = data;
+    });
+}
+
 
 function runUnix() {
     const cmd = window.getSelection().toString().trim() || getCode().trim().split("\\n").pop().trim();
@@ -268,11 +321,14 @@ function runUnix() {
 <div id="topWindow" class="window" contenteditable="true" spellcheck="false"></div>
 
 <div id="buttonRow">
-    <button class="btn" onclick="runUnix()">Bash</button>
+    <button class="btn" onclick="runUnix()">#Sh</button>
+    <button class="btn" onclick="runC()">C ></button>
+    <button class="btn" onclick="runCpp()">C++</button>
     <button class="btn" onclick="runRust()">Rust</button>
     <button class="btn" onclick="runGo()">Go ></button>
     <button class="btn" onclick="runPython()">P ></button>
-    <button class="btn" onclick="runHTML()">HTML</button>
+    <button class="btn" onclick="runJavaScript()">JS ></button>
+    <button class="btn" onclick="runHTML()">Html</button>
 </div>
 
 <div id="bottomWindow" class="window" contenteditable="true"></div>
@@ -308,11 +364,80 @@ def run_python():
 
     return result.stdout
 
+@app.route("/run_c", methods=["POST"])
+def run_c():
+    code = request.form.get("code", "")
+    tmp = None
+    exe = None
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".c") as f:
+            f.write(code.encode())
+            tmp = f.name
+
+        exe = tmp.replace(".c", "")
+
+        subprocess.check_output(
+            ["gcc", tmp, "-o", exe],
+            stderr=subprocess.STDOUT
+        )
+
+        result = subprocess.check_output(
+            [exe],
+            stderr=subprocess.STDOUT
+        ).decode()
+
+        return result
+
+    except subprocess.CalledProcessError as e:
+        return e.output.decode()
+
+    finally:
+        for p in [tmp, exe]:
+            if p and os.path.exists(p):
+                os.remove(p)
+
+
+@app.route("/run_cpp", methods=["POST"])
+def run_cpp():
+    code = request.form.get("code", "")
+    tmp = None
+    exe = None
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".cpp") as f:
+            f.write(code.encode())
+            tmp = f.name
+
+        exe = tmp.replace(".cpp", "")
+
+        subprocess.check_output(
+            ["g++", tmp, "-o", exe],
+            stderr=subprocess.STDOUT
+        )
+
+        result = subprocess.check_output(
+            [exe],
+            stderr=subprocess.STDOUT
+        ).decode()
+
+        return result
+
+    except subprocess.CalledProcessError as e:
+        return e.output.decode()
+
+    finally:
+        for p in [tmp, exe]:
+            if p and os.path.exists(p):
+                os.remove(p)
+
+
 @app.route("/run_rust", methods=["POST"])
 def run_rust():
     code = request.form.get("code", "")
     tmp = None
     exe = None
+
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".rs") as f:
             f.write(code.encode())
@@ -320,20 +445,32 @@ def run_rust():
 
         exe = tmp.replace(".rs", "")
 
-        subprocess.check_output(["rustc", tmp, "-o", exe], stderr=subprocess.STDOUT)
-        result = subprocess.check_output([exe], stderr=subprocess.STDOUT).decode()
+        subprocess.check_output(
+            ["rustc", tmp, "-o", exe],
+            stderr=subprocess.STDOUT
+        )
+
+        result = subprocess.check_output(
+            [exe],
+            stderr=subprocess.STDOUT
+        ).decode()
+
         return result
+
     except subprocess.CalledProcessError as e:
         return e.output.decode()
+
     finally:
         for p in [tmp, exe]:
             if p and os.path.exists(p):
                 os.remove(p)
 
+
 @app.route("/run_go", methods=["POST"])
 def run_go():
     code = request.form.get("code", "")
     tmp = None
+
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".go") as f:
             f.write(code.encode())
@@ -345,17 +482,47 @@ def run_go():
         ).decode()
 
         return result
+
     except subprocess.CalledProcessError as e:
         return e.output.decode()
+
     finally:
         if tmp and os.path.exists(tmp):
             os.remove(tmp)
 
+
+@app.route("/run_javascript", methods=["POST"])
+def run_javascript():
+    code = request.form.get("code", "")
+    tmp = None
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".js") as f:
+            f.write(code.encode())
+            tmp = f.name
+
+        result = subprocess.check_output(
+            ["node", tmp],
+            stderr=subprocess.STDOUT
+        ).decode()
+
+        return result
+
+    except subprocess.CalledProcessError as e:
+        return e.output.decode()
+
+    finally:
+        if tmp and os.path.exists(tmp):
+            os.remove(tmp)
+
+
 @app.route("/run_unix", methods=["POST"])
 def run_unix():
     cmd = request.form.get("cmd", "")
+
     if not cmd.strip():
         return ""
+
     try:
         result = subprocess.check_output(
             cmd,
@@ -363,9 +530,14 @@ def run_unix():
             stderr=subprocess.STDOUT,
             executable="/bin/bash"
         ).decode()
+
         return result
+
     except subprocess.CalledProcessError as e:
         return e.output.decode()
 
+
 if __name__ == "__main__":
     app.run(port=8700)
+
+
