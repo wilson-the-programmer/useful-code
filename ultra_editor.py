@@ -853,3 +853,44 @@ app = Application(
 
 app.run()
 
+
+
+
+"""
+
+Key Bindings Guide
+
+Control keys in alphabetical order:
+- ctrl + b - quick bash shell
+- ctrl + c - toggle syntax highlighting
+- ctrl + d - run C++ Qt6 app
+- ctrl + f - open or create a new file
+- ctrl + g - search/find text from cursor position
+- ctrl + k - clear editor and output window
+- ctrl + l - jump to a specific line number
+- ctrl + o - open a file from the current line
+- ctrl + p - run code quickly
+- ctrl + q - quit the editor
+- ctrl + r - run code in terminal
+- ctrl + s - save current file
+- ctrl + space - auto-complete
+- ctrl + t - open shell
+- ctrl + up - focus the editor
+- ctrl + down - focus the output window
+- ctrl + right - run current line as shell command
+- ctrl + y - reload file
+- ctrl + z - save file as
+
+Other keys:
+- shift + down - save current word to history
+- shift + up - move through saved words
+- shift + right - insert saved word
+- tab - insert 4 spaces
+
+Notes:
+- This editor uses VI-style editing mode.
+- The status bar shows the current file, cursor position, and detected language.
+- Ctrl + r is best for programs that need user input.
+- Ctrl + p is best for simple output-only programs.
+
+"""
