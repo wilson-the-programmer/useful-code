@@ -742,6 +742,7 @@ def view_file_from_cursor(event):
             pygment_style = get_theme_style()
             editor.style = get_theme_style()
             event.app.invalidate()
+            file_name = file
 
         except:
             pass
