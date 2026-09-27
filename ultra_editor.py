@@ -29,6 +29,7 @@ from prompt_toolkit.widgets import (
 )
 
 from pygments.lexers import (
+    NasmLexer,
     BashLexer,
     CLexer,
     CppLexer,
@@ -151,6 +152,8 @@ except FileNotFoundError:
 def get_lexer():
     if not pygments_on:
         return None
+    elif file_name.endswith(".asm"):
+        return PygmentsLexer(NasmLexer)
     elif file_name.endswith(".sh"):
         return PygmentsLexer(BashLexer)
     elif file_name.endswith(".c"):
@@ -170,6 +173,8 @@ def get_lexer():
 
 
 def get_theme_style():
+    if file_name.endswith(".c") or file_name.endswith(".asm"):
+        return style_from_pygments_cls(get_style_by_name("lightbulb"))    
     if file_name.endswith(".c") or file_name.endswith(".cpp"):
         return style_from_pygments_cls(get_style_by_name("lightbulb"))
     elif file_name.endswith(".rs"):
@@ -192,8 +197,8 @@ style = Style(
     [
         *pygment_style.style_rules,
         ("status-bar", "bg:#222222 fg:orange bold"),
-        ("theme-editor", "bg: black fg:white"),
-        ("theme-output_window", "bg: white fg:black bold"),
+        ("theme-editor", "bg:black fg:white"),
+        ("theme-output_window", "bg:gold fg:black bold"),
     ]
 )
 
@@ -215,7 +220,7 @@ editor = TextArea(
 output_window = TextArea(
     text="",
     style="class:theme-output_window",
-    lexer=PygmentsLexer(PythonLexer),
+    #lexer=PygmentsLexer(PythonLexer),
     width=20,
     height=12,
     multiline=True,
@@ -633,6 +638,9 @@ def save_as_file(event):
     run_in_terminal(save_as)
 
 
+
+
+
 @kb.add("c-p")
 def run_code_quicj(event):
     global file_name
@@ -658,6 +666,42 @@ def run_code_quicj(event):
             cmd = f"bash {tmp_filename}"
         elif ext == ".js":
             cmd = f"node {tmp_filename}"
+        elif ext in (".asm", ".s"):
+            object_file = tmp_filename.removesuffix(ext) + ".o"
+            executable_file = tmp_filename.removesuffix(ext)
+
+            assemble = subprocess.run(
+                ["nasm", "-f", "elf64", tmp_filename, "-o", object_file],
+                capture_output=True,
+                text=True
+            )
+
+            if assemble.returncode != 0:
+                output_window.text = assemble.stderr
+                return
+
+            link = subprocess.run(
+                ["ld", object_file, "-o", executable_file],
+                capture_output=True,
+                text=True
+            )
+
+            if link.returncode != 0:
+                output_window.text = link.stderr
+                return
+
+            exe = subprocess.run(
+                [executable_file],
+                capture_output=True,
+                text=True
+            )
+
+            if exe.returncode != 0:
+                output_window.text = exe.stderr
+            else:
+                output_window.text = exe.stdout
+
+            return
         else:
             return
 
@@ -665,8 +709,12 @@ def run_code_quicj(event):
             output_window.text = "\nCan't run this code without run_in_terminal()\n\nTry: pressing Control + r instead.\n\n  You can also use quick bash by\n  pressing Control + b."
 
         else:
-
-            runCode = subprocess.run([cmd], capture_output=True, text=True, shell=True)
+            runCode = subprocess.run(
+                [cmd],
+                capture_output=True,
+                text=True,
+                shell=True
+            )
 
             if runCode.returncode != 0:
                 output_window.text = runCode.stderr
@@ -674,7 +722,9 @@ def run_code_quicj(event):
                 output_window.text = runCode.stdout
 
     except Exception as e:
-        output_window.text = e
+        output_window.text = str(e)
+
+
 
 
 @kb.add("c-c")
@@ -754,7 +804,7 @@ def view_file_from_cursor(event):
             pygment_style = get_theme_style()
             editor.style = get_theme_style()
             event.app.invalidate()
-            file_name = file
+
 
         except:
             pass
