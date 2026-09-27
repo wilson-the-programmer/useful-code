@@ -193,7 +193,7 @@ style = Style(
         *pygment_style.style_rules,
         ("status-bar", "bg:#222222 fg:orange bold"),
         ("theme-editor", "bg: black fg:white"),
-        ("theme-output_window", "bg:#101037 fg:white bold"),
+        ("theme-output_window", "bg: white fg:black bold"),
     ]
 )
 
@@ -230,7 +230,13 @@ status_bar = Label(
 )
 
 
-root_container = HSplit([status_bar, HSplit([editor, output_window])])
+root_container = HSplit([
+    HSplit([
+        editor,
+        status_bar,
+        output_window
+    ])
+])
 
 
 home_files = os.listdir(".")
@@ -491,6 +497,8 @@ def insert_word(event):
 @kb.add("c-b")
 def quick_bash(event):
     def run_subprocess():
+        os.system("python3 ~/quick_bash.py")
+    """
         os.system("clear")
         sleep(0.3)
 
@@ -501,7 +509,7 @@ def quick_bash(event):
             if cmd == "q" or cmd == "exit":
                 return
             os.system(cmd)
-
+    """
     run_in_terminal(run_subprocess)
 
 
@@ -596,25 +604,29 @@ def go_down(event):
 
 @kb.add("c-k")
 def clear_all(event):
+    global file_name
+    
     editor.text = ""
     output_window.text = ""
-
+    file_name = 'Untitled'
 
 @kb.add("c-z")
 def save_as_file(event):
     def save_as():
+        global file_name
+        
         os.system("clear")
         sleep(0.3)
 
-        file_name = input("\nSave As: ").strip()
+        file = input("\nSave As: ").strip()
 
-        with open(file_name, "w", encoding="utf-8") as f:
+        with open(file, "w", encoding="utf-8") as f:
             f.write(editor.text)
-            status_bar.text = f"File Saved As: {file_name} ✓"
-
+            status_bar.text = f"File Saved As: {file} ✓"
+        file_name = file
         def clear_bar():
             sleep(1)
-            status_bar.text = f"File: {file_name}"
+            status_bar.text = f"File: {file}"
 
         threading.Thread(target=clear_bar, daemon=True).start()
 
@@ -857,6 +869,7 @@ app.run()
 
 
 
+
 """
 
 Key Bindings Guide
@@ -895,3 +908,4 @@ Notes:
 - Ctrl + p is best for simple output-only programs.
 
 """
+
