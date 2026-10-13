@@ -9,12 +9,26 @@ from pygments.styles import get_style_by_name
 
 
 aarch64_words = [
-    "mov", "movz", "movk", "ldr", "str", "ldp", "stp", "adr", "adrp",
-    "add", "sub", "mul", "madd", "msub", "sdiv", "udiv", "neg",
-    "and", "orr", "eor", "mvn", "lsl", "lsr", "asr", "cmp", "tst",
-    "b", "bl", "br", "blr", "ret", "cbz", "cbnz", "b.eq", "b.ne",
-    "b.gt", "b.lt", "svc", "nop", "csel", "cset", "mrs", "msr",
-    "exit", "quit"
+    "adc", "adcs", "add", "adds", "adr", "adrp", "and", "ands",
+    "asr", "b", "b.eq", "b.ge", "b.gt", "b.hi", "b.hs", "b.le",
+    "b.lo", "b.ls", "b.lt", "b.mi", "b.ne", "b.pl", "b.vs",
+    "b.vc", "bic", "bics", "bl", "blr", "br", "brk", "cbnz",
+    "cbz", "ccmn", "ccmp", "cinc", " cinc", "cinv", "clrex",
+    "cls", "clz", "cmn", "cmp", "cneg", "csel", "cset", "csetm",
+    "csinc", "csinv", "csneg", "dc", "dmb", "dsb", "dgh",
+    "eon", "eor", "eret", "extr", "isb", "ldar", "ldarb",
+    "ldarh", "ldaxp", "ldaxr", "ldp", "ldr", "ldrb", "ldrh",
+    "ldrsb", "ldrsh", "ldrsw", "ldur", "ldurb", "ldurh",
+    "ldursb", "ldursh", "ldursw", "ldxr", "ldxrb", "ldxrh",
+    "lsl", "lsr", "madd", "mov", "movk", "movn", "movz",
+    "msr", "mrs", "msub", "mul", "mvn", "neg", "negs",
+    "nop", "orn", "orr", "prfm", "ret", "rev", "rev16",
+    "rev32", "ror", "sbc", "sbcs", "sdiv", "smaddl", "smulh",
+    "smull", "stlr", "stlrb", "stlrh", "stp", "str", "strb",
+    "strh", "stur", "sturb", "sturh", "stxr", "stxrb",
+    "stxrh", "sub", "subs", "svc", "sxtb", "sxth", "sxtw",
+    "sys", "tlbi", "tst", "uxtb", "uxth", "udiv", "umaddl",
+    "umulh", "umull", "wfe", "wfi", "yield"
 ]
 
 
