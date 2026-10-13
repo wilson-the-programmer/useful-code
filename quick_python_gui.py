@@ -353,9 +353,32 @@ unix_words = [
 
 dir_list = []
 
+my_variables = []
+
 home_files = os.listdir(".")
 
 all_words = sorted(set(keyword.kwlist + dir(builtins) + mixed_words + unix_words + dir_list))
+
+
+
+
+def update_variables(event=None):
+    global my_var
+
+    cursor_line = int(editor.index("insert").split(".")[0])
+    start_line = max(1, cursor_line - 10)
+    end_line = cursor_line + 10
+
+    text = editor.get(f"{start_line}.0", f"{end_line}.end")
+
+    for match in re.finditer(r"(?<![=!<>])\b([a-zA-Z_]\w*)\s+=\s*(?!=)", text):
+        variable = match.group(1)
+
+        if variable not in my_variables:
+            my_variables.append(variable)
+
+        if len(my_variables) >= 25:
+            my_variables.pop(0)
 
 
 def update_dir_list(event=None):
@@ -912,6 +935,7 @@ def update_cursor_position(event=None):
     
 
 
+
 def show_code_map(event=None):
     result_window.delete("1.0", "end")
     code = editor.get("1.0", "end")
@@ -971,8 +995,8 @@ def quick_uni():
    
 #---------------
 
-theme_bg = "#444444",
-theme_fg = "cyan"
+theme_bg = "blue",
+theme_fg = "white"
 
 root = tk.Tk()
 
@@ -1028,8 +1052,8 @@ menu = tk.Menu(
     root,
     bd=4,
     font=("Courier New", 11),
-    bg = "#444444",
-    fg = "cyan"
+    bg = theme_bg,
+    fg = theme_fg
 )
 
 
@@ -1240,6 +1264,7 @@ def auto_suggest(event=None):
     highlight_strings()
     highlight_symbols()
     update_dir_list()
+    update_variables()
     update_cursor_position()
     
     global popup, suggestions, current_word_start
@@ -1267,7 +1292,7 @@ def auto_suggest(event=None):
     current_word_start = f"{cursor_position} - {len(current_word)} chars"
 
     matches = [
-        item for item in all_words + dir_list
+        item for item in all_words + dir_list + my_variables
         if item.lower().startswith(current_word.lower())
         and item.lower() != current_word.lower()
     ]
