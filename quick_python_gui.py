@@ -3,6 +3,7 @@ import io
 import sys
 import re
 import os
+import random
 import threading
 import tempfile
 import subprocess
@@ -18,20 +19,46 @@ from tkinter import (
 
 
 
-mixed_keywords = [
-    "#include",
-    "<iostream>",
-    "Boolean(",
+mixed_words = [
+    "append(",
+    "clear(",
+    "copy(",
+    "count(",
+    "del(",
+    "extend(",
+    "get(",
+    "index(",
+    "insert(",
+    "items(",
+    "join(",
+    "keys(",
+    "pop(",
+    "remove(",
+    "reverse(",
+    "setdefault(",
+    "sort(",
+    "split(",
+    "strip(",
+    "update(",
+    "values(",
+    "replace(",
+    "startswith(",
+    "endswith(",
+    "find(",
+    "format(",
+    "lower(",
+    "upper(",
+    "capitalize(",
+    "title(",
     "False",
     "None",
-    "Println(",
-    "Symbol",
     "True",
     "abs(",
     "any(",
     "ascii(",
     "assert",
     "async",
+    "auto",
     "await",
     "bin(",
     "bool(",
@@ -44,9 +71,10 @@ mixed_keywords = [
     "case",
     "casefold(",
     "center(",
+    "char",
     "chr(",
-    "classmethod(",
     "class",
+    "classmethod(",
     "compile(",
     "complex(",
     "console",
@@ -58,11 +86,14 @@ mixed_keywords = [
     "dict(",
     "dir(",
     "divmod(",
+    "do",
     "document",
+    "double",
     "elif",
     "else",
     "encode(",
     "endswith(",
+    "enum",
     "enumerate(",
     "eval(",
     "exec(",
@@ -70,12 +101,15 @@ mixed_keywords = [
     "expandtabs(",
     "export",
     "extends",
+    "extern",
     "false",
     "filter(",
     "finally",
     "find(",
+    "float",
     "float(",
     "fmt",
+    "for",
     "format(",
     "format_map(",
     "from",
@@ -83,27 +117,33 @@ mixed_keywords = [
     "func",
     "function",
     "getattr(",
-    "globals(",
     "global",
-    "hash(",
+    "globals(",
+    "goto",
     "hasattr(",
+    "hash(",
     "hex(",
+    "if",
     "import",
+    "include",
     "index(",
+    "inline",
     "input(",
     "instanceof(",
-    "isinstance(",
-    "issubclass(",
+    "int",
+    "iostream",
     "isalnum(",
     "isalpha(",
     "isascii(",
     "isdecimal(",
     "isdigit(",
     "isidentifier(",
+    "isinstance(",
     "islower(",
     "isnumeric(",
     "isprintable(",
     "isspace(",
+    "issubclass(",
     "istitle(",
     "isupper(",
     "join(",
@@ -111,12 +151,14 @@ mixed_keywords = [
     "list(",
     "ljust(",
     "locals(",
+    "long",
     "lower(",
     "lstrip(",
     "main",
     "maketrans(",
     "map(",
     "match(",
+    "matplot.pyplot",
     "max(",
     "memoryview(",
     "min(",
@@ -124,6 +166,7 @@ mixed_keywords = [
     "next(",
     "nonlocal",
     "null",
+    "numpy",
     "object(",
     "oct(",
     "open(",
@@ -132,15 +175,18 @@ mixed_keywords = [
     "pass",
     "pow(",
     "print(",
+    "prompt_toolkit",
     "property(",
     "quit(",
-    "random",
     "raise",
+    "random",
     "range(",
-    "repr(",
+    "register",
     "removeprefix(",
     "removesuffix(",
     "replace(",
+    "repr(",
+    "restrict",
     "return",
     "reversed(",
     "rfind(",
@@ -150,8 +196,12 @@ mixed_keywords = [
     "rpartition(",
     "rsplit(",
     "rstrip(",
+    "scipy",
     "set(",
     "setattr(",
+    "short",
+    "signed",
+    "sizeof",
     "slice(",
     "sorted(",
     "split(",
@@ -161,29 +211,32 @@ mixed_keywords = [
     "staticmethod(",
     "str(",
     "strip(",
+    "struct",
     "sum(",
     "super(",
     "swapcase(",
     "switch",
     "this",
     "title(",
+    "tkinter",
     "translate(",
     "true",
     "tuple(",
+    "typedef",
     "typeof",
     "undefined",
+    "union",
+    "unsigned",
     "upper(",
     "vars(",
+    "void",
+    "volatile",
     "while",
     "window",
     "with",
     "yield",
     "zfill(",
-    "matplot.pyplot",
-    "numpy",
-    "prompt_toolkit",
-    "scipy",
-    "tkinter",
+
 ]
 
 unix_words = [
@@ -297,17 +350,55 @@ unix_words = [
     "zcat"
 ]
 
+
+dir_list = []
+
+home_files = os.listdir(".")
+
+all_words = sorted(set(keyword.kwlist + dir(builtins) + mixed_words + unix_words + dir_list))
+
+
+def update_dir_list(event=None):
+    global dir_list
+
+    lines_checked = editor.get("1.0", "8.end")
+    libraries = []
+
+    for line in lines_checked.splitlines():
+        match = re.match(r"\s*import\s+([\w.]+)", line)
+
+        if match:
+            libraries.append(match.group(1))
+
+        if len(libraries) == 4:
+            break
+
+    for library in libraries:
+        try:
+            module = __import__(library, fromlist=["*"])
+
+            for name in sorted(dir(module)):
+                if not name.startswith("_") and callable(getattr(module, name, None)):
+                    dir_list.append(f"{name}(")
+
+                    if len(dir_list) > 100:
+                        dir_list.pop(-1)
+
+                    if len(dir_list) >= 25:
+                        break
+
+        except ImportError:
+            continue
+
+
+
 def quick_hex(r, g, b):
 	return f"#{r:02x}{g:02x}{b:02x}"
 	
 def insert_spaces():
 	editor.insert("insert", "    ")
 
-home_files = os.listdir(".")
 
-
-
-all_words = sorted(set(keyword.kwlist + dir(builtins) + mixed_keywords + unix_words))
 
 
 def run_python():
@@ -387,8 +478,8 @@ def save_last_opened():
     if last_file_opened:
     	with open(last_file_opened, "w", encoding="utf-8") as file:
     		file.write(current_window.get("1.0", "end-1c"))
-    		result_window.insert(1.0, f"File: {last_file_opened} Saved")
-    		root.after(2000, lambda: result_window.delete(1.0, "1.end"))
+    		status_window.insert(0, f"File: {last_file_opened} Saved")
+    		root.after(2000, lambda: status_window.delete(0, "end"))
     		
     else:
     	save_file()
@@ -406,6 +497,39 @@ def redo_last():
         editor.edit_redo()
     except:
         pass
+        
+
+def smart_tab(event=None):
+    current_widget = root.focus_get()
+    char_left = current_widget.get("insert-1c", "insert")
+    text = current_widget.get("insert linestart", "insert lineend").strip()
+    try:
+        if text:
+            last_word = text.split()[-1]
+            last_char = text.split()[-1][-1]
+        for i in [":", "("]:
+            if i == char_left:
+                root.after(100, lambda: current_widget.insert(tk.INSERT, "    "))
+                
+    except:
+        pass
+
+def color_word(event=None):
+    start = "1.0"
+    end = editor.index("1.0 wordend")
+
+    color = "#{:02x}{:02x}{:02x}".format(
+        random.randint(80, 255),
+        random.randint(80, 255),
+        random.randint(80, 255)
+    )
+
+    editor.tag_add("random_color", start, end)
+    editor.tag_config("random_color", foreground=color)
+    
+    result_window.delete(1.0, "1.end")
+    result_window.insert(1.0, color)
+    
 
 
 def list_files():
@@ -428,14 +552,11 @@ def list_files():
 
 
 def copy_text():
-    try:
-        current_window = root.focus_get()
-        text = current_window.get("sel.first", "sel.last")
-
+    current_widget = root.focus_get()
+    if hasattr(current_widget, "selection_get"):
+        selected_text = current_widget.selection_get()
         root.clipboard_clear()
-        root.clipboard_append(text)
-    except:
-        pass
+        root.clipboard_append(selected_text)
 
 
 def cut_text():
@@ -466,6 +587,7 @@ def paste_text():
      
 def auto_indent(event=None):
     detect_command()
+    smart_tab()
     current_window = root.focus_get()
     current_line = int(current_window.index("insert").split(".")[0])
     start_of_line = f"{current_line}.0"
@@ -602,54 +724,102 @@ def run_c():
 
 
 def clear_screen():
+	current_widget = root.focus_get()
 	confirm = messagebox.askyesno("Are You Sure", "Clear All ?")
 	if confirm:
-		editor.delete(1.0, "end")
+		current_widget.delete(1.0, "end")
+
+
+def swap_windows():
+    confirm = messagebox.askyesno("Swap Top & Bottom", "Switch?")
+    if confirm:
+        editor_text = editor.get("1.0", "end-1c")
+        result_text = result_window.get("1.0", "end-1c")
+
+        editor.delete("1.0", "end")
+        result_window.delete("1.0", "end")
+
+        editor.insert("1.0", result_text)
+        result_window.insert("1.0", editor_text)
 
 
 
+python_words = set(keyword.kwlist + all_words)
 
-python_words = set(keyword.kwlist)
-green_words = [
-    "print",
-    "input",
-    "len",
-    "range",
-    "str",
-    "int",
-    "float",
-    "list",
-    "dict",
-    "set",
-    "tuple",
-    "type",
-    "open",
-    "sum",
-    "min",
-    "max",
-    "abs",
-    "round",
-    "sorted",
-    "enumerate"
+func_words = [
+    "abs(",
+    "append(",
+    "capitalize(",
+    "clear(",
+    "copy(",
+    "count(",
+    "del(",
+    "dict(",
+    "endswith(",
+    "enumerate(",
+    "extend(",
+    "find(",
+    "float(",
+    "format(",
+    "get(",
+    "index(",
+    "input(",
+    "insert(",
+    "int(",
+    "items(",
+    "join(",
+    "keys(",
+    "len(",
+    "list(",
+    "lower(",
+    "max(",
+    "min(",
+    "open(",
+    "pop(",
+    "print(",
+    "range(",
+    "remove(",
+    "replace(",
+    "reverse(",
+    "round(",
+    "set(",
+    "setdefault(",
+    "sorted(",
+    "sort(",
+    "split(",
+    "startswith(",
+    "str(",
+    "strip(",
+    "sum(",
+    "title(",
+    "tuple(",
+    "type(",
+    "update(",
+    "upper(",
+    "values("
 ]
 
 def highlight_words(event=None):
-    start = editor.index("insert - 3 lines linestart")
-    end = editor.index("insert + 4 lines linestart")
+    
+    kw_color = "#ef9f93"
+    func_color = "cyan"
+    
+    
+    start = editor.index("insert - 10 lines linestart")
+    end = editor.index("insert + 10 lines linestart")
     text = editor.get(start, end)
 
     def scan():
-        import re
 
         results = []
 
-        for word, tag in [(w, "orange") for w in python_words] + [(w, "gold") for w in green_words]:
+        for word, tag in [(w, kw_color) for w in python_words] + [(w, func_color) for w in func_words]:
             for match in re.finditer(r"\b" + re.escape(word) + r"\b", text):
                 results.append((match.start(), match.end(), tag))
 
         def apply():
-            editor.tag_remove("orange", start, end)
-            editor.tag_remove("gold", start, end)
+            editor.tag_remove(kw_color, start, end)
+            editor.tag_remove(func_color, start, end)
 
             for first, last, tag in results:
                 editor.tag_add(
@@ -658,17 +828,157 @@ def highlight_words(event=None):
                     f"{start} + {last} chars"
                 )
 
-            editor.tag_config("orange", foreground="orange")
-            editor.tag_config("gold", foreground="gold")
+            editor.tag_config(kw_color, foreground=kw_color)
+            editor.tag_config(func_color, foreground=func_color)
 
         editor.after(0, apply)
 
     threading.Thread(target=scan, daemon=True).start()
 
 
+def highlight_variables(event=None):
+    color = "#f18e93"
+    cursor_line = int(editor.index("insert").split(".")[0])
+    start_line = max(1, cursor_line - 10)
+    end_line = cursor_line + 10
+
+    editor.tag_remove(color, "1.0", "end")
+    text = editor.get(f"{start_line}.0", f"{end_line}.end")
+
+    for match in re.finditer(r"\b[a-zA-Z_]\w*(?=\s*=)", text):
+        start = f"{start_line}.0 + {match.start()} chars"
+        end = f"{start_line}.0 + {match.end()} chars"
+        editor.tag_add(color, start, end)
+
+    editor.tag_config(color, foreground=color)
+
+
+def highlight_numbers(event=None):
+    color = "#b8b371"
+    cursor_line = int(editor.index("insert").split(".")[0])
+    start_line = max(1, cursor_line - 10)
+    end_line = cursor_line + 10
+
+    editor.tag_remove(color, "1.0", "end")
+    text = editor.get(f"{start_line}.0", f"{end_line}.end")
+
+    for match in re.finditer(r"\b\d+\.?\d*\b", text):
+        start = f"{start_line}.0 + {match.start()} chars"
+        end = f"{start_line}.0 + {match.end()} chars"
+        editor.tag_add(color, start, end)
+
+    editor.tag_config(color, foreground=color)
+    
+
+def highlight_symbols(event=None):
+    color = "#8cbef3"
+    cursor_line = int(editor.index("insert").split(".")[0])
+    start_line = max(1, cursor_line - 10)
+    end_line = cursor_line + 10
+
+    editor.tag_remove(color, "1.0", "end")
+    text = editor.get(f"{start_line}.0", f"{end_line}.end")
+
+    for match in re.finditer(r"[@=$_&\-+()/\*:;!?%{}\\\[\]<>^,.✓]", text):
+        start = f"{start_line}.0 + {match.start()} chars"
+        end = f"{start_line}.0 + {match.end()} chars"
+        editor.tag_add(color, start, end)
+
+    editor.tag_config(color, foreground=color)
+
+
+def highlight_strings(event=None):
+    color = "orange"
+    cursor_line = int(editor.index("insert").split(".")[0])
+    start_line = max(1, cursor_line - 10)
+    end_line = cursor_line + 10
+
+    editor.tag_remove(color, "1.0", "end")
+    text = editor.get(f"{start_line}.0", f"{end_line}.end")
+
+    for match in re.finditer(r"""(['"]).*?\1|(""" + r"""'''.*?'''|""".replace('"', '\\"') + r"""\"\"\".*?\"\"\")""", text, re.DOTALL):
+        start = f"{start_line}.0 + {match.start()} chars"
+        end = f"{start_line}.0 + {match.end()} chars"
+        editor.tag_add(color, start, end)
+
+    editor.tag_config(color, foreground=color)
+
+
+def update_cursor_position(event=None):
+    
+    line, column = editor.index("insert").split(".")
+    status_window.delete(0, "end")
+    status_window.insert(0, f"{line}, {column}")
+    
+
+
+def show_code_map(event=None):
+    result_window.delete("1.0", "end")
+    code = editor.get("1.0", "end")
+    functions = {}
+    variables = {}
+
+    for line_number, line in enumerate(code.splitlines(), 1):
+        function = re.match(r"\s*def\s+(\w+)\s*\(", line)
+        if function:
+            functions[function.group(1) + "()"] = line_number
+
+        assignment = re.match(r"\s*([a-zA-Z_]\w*)\s*=", line)
+        if assignment:
+            name = assignment.group(1)
+            if name not in {
+                "bg", "fg", "font", "text", "width", "height",
+                "bd", "padx", "pady", "relief", "command",
+                "root", "editor", "label"
+            }:
+                variables[name] = line_number
+
+    result_window.insert("end", "Functions:\n\n")
+    for name in sorted(functions):
+        result_window.insert("end", f"{name}, {functions[name]}\n")
+
+    result_window.insert("end", "\nVariables:\n\n")
+    for name in sorted(variables):
+        result_window.insert("end", f"{name}, {variables[name]}\n")
+        
+        
+        
+widget_expanded = False
+
+def expand_widget():
+    global widget_expanded
+    widget_expanded = not widget_expanded
+
+    if widget_expanded:
+        root.geometry("700x1280+0+0")
+    else:
+        root.geometry("690x760+0+0")
+   
+   
+def quick_uni():
+    current_widget = result_window
+    start = simpledialog.askinteger("Enter Start Value", "Start: ")
+    end = simpledialog.askinteger("Enter End Value", "End ")
+    current_widget.delete(1.0, "end")
+    for i in range(start, end):
+        
+        current_widget.insert(1.0, f"\nchr({i}) = {chr(i)}")
+        
+        
+
+
+   
+   
+#---------------
+
+theme_bg = "#444444",
+theme_fg = "cyan"
+
 root = tk.Tk()
 
 root.geometry("690x760")
+
+root.config(bg="darkcyan")
 
 
 editor = tk.Text(
@@ -677,28 +987,40 @@ editor = tk.Text(
     padx=10,
     pady=10,
     undo=True,
-    height=8,
+    height=10,
     insertwidth=4,
-    insertbackground="cyan",
+    insertbackground="lightgrey",
     bd=1,
     font=("Courier New", 8),
     bg="black",
     fg="lightgrey",
 )
-editor.pack(expand=True, fill="both", side="top")
+editor.pack(expand=True, fill="both", side="top", pady=(0, 0))
+
+
+status_window = tk.Entry(
+    root,
+    insertbackground="cyan",
+    insertwidth=5,
+    bd=5,
+    bg="#331100",
+    fg="red",
+    font=("Courier New", 9),
+)
+status_window.pack(side="top", fill="x")
 
 result_window = tk.Text(
     root,
     wrap="word",
     padx=10,
     pady=10,
-    height=4,
-    insertbackground="red",
+    height=3,
+    insertbackground="cyan",
     insertwidth=5,
     bd=2,
-    bg="lightyellow",
-    fg="blue",
-    font=("Courier New", 9),
+    bg="#255157",
+    fg="white",
+    font=("Courier New", 8),
 )
 result_window.pack(expand=True, fill="both", side="top")
 
@@ -706,9 +1028,10 @@ menu = tk.Menu(
     root,
     bd=4,
     font=("Courier New", 11),
-    bg = "lightcyan",
-    fg = "darkblue"
+    bg = "#444444",
+    fg = "cyan"
 )
+
 
 
 
@@ -725,15 +1048,53 @@ file_menu.add_command(label="Open", command=open_file)
 
 file_menu.add_command(label="Save", command=save_file)
 
+file_menu.add_command(label="Expand Screen []", command=expand_widget)
+
+file_menu.add_command(label="Swap Top & Bottom ⇆", command=swap_windows)
+
+
+file_menu.add_command(label="Code Map", command=show_code_map)
+
+file_menu.add_command(label="Unicodes", command=quick_uni)
+
+
+
+file_menu.add_command(label="See Dir List", command=lambda: (result_window.delete(1.0, "end"), result_window.insert(1.0, dir_list)))
+
+
+
+
+edit_menu = tk.Menu(menu, tearoff=0, font=("Courier New", 11))
+
+menu.add_cascade(label="Edit", menu=edit_menu)
+
+
+edit_menu.add_command(label="Cut ✂", command=cut_text)
+
+edit_menu.add_command(label="Copy ⎘", command=copy_text)
+
+edit_menu.add_command(label="Paste ⎙", command=paste_text)
+
+
+edit_menu.add_command(label="Color First Word", command=color_word)
+
+
+
+edit_menu.add_command(label="Undo ↶", command=undo_last)
+
+edit_menu.add_command(label="Redo ↷", command=redo_last)
+
+edit_menu.add_command(label="Clear Screen", command=clear_screen)
+
 
 files_button = tk.Button(
     root,
     command=list_files,
     text="ls *",
     width=1,
-    bd=6,
-    bg="lightblue",
-    fg="darkblue",
+    bd=4,
+    bg=theme_bg,
+    fg=theme_fg,
     font=("Times", 10),
 )
 
@@ -745,9 +1106,9 @@ view_button = tk.Button(
     command=open_file_from_cursor,
     text="View",
     width=1,
-    bd=6,
-    bg="lightcyan",
-    fg="darkblue",
+    bd=4,
+    bg=theme_bg,
+    fg=theme_fg,
     font=("Times", 10),
 )
 
@@ -759,12 +1120,12 @@ view_button.pack(side="left")
 open_button = tk.Button(
     root,
     command=undo_last,
-    text="Undo",
+    text="↶",
     width=1,
-    bd=6,
-    bg="lightyellow",
-    fg="blue",
-    font=("Times", 10),
+    bd=4,
+    bg=theme_bg,
+    fg=theme_fg,
+    font=("Times", 10, "bold"),
 )
 
 open_button.pack(side="left")
@@ -776,9 +1137,9 @@ save_button = tk.Button(
     command=save_last_opened,
     text="Save",
     width=1,
-    bd=6,
-    bg="lightgreen",
-    fg="darkgreen",
+    bd=4,
+    bg=theme_bg,
+    fg=theme_fg,
     font=("Times", 10),
 )
 
@@ -792,10 +1153,10 @@ files_button = tk.Button(
     command=run_c,
     text="C >",
     width=1,
-    bd=6,
-    bg="#002200",
-    fg="lightgrey",
-    font=("Times", 10),
+    bd=4,
+    bg="black",
+    fg="gold",
+    font=("Times", 10, "bold"),
 )
 
 files_button.pack(side="left")
@@ -809,27 +1170,27 @@ python_button = tk.Button(
     command=run_python,
     text="P >",
     width=1,
-    bd=6,
-    bg="grey",
-    fg="cyan",
-    font=("Times", 10),
+    bd=4,
+    bg="black",
+    fg="darkorange",
+    font=("Times", 10, "bold"),
 )
 
 python_button.pack(side="left")
 
 
-files_button = tk.Button(
+expand_button = tk.Button(
     root,
-    command=clear_screen,
-    text="Cls",
+    command=expand_widget,
+    text="[]",
     width=1,
-    bd=6,
-    bg="darkred",
-    fg="red",
+    bd=4,
+    bg=theme_bg,
+    fg=theme_fg,
     font=("Times", 10),
 )
 
-files_button.pack(side="left")
+expand_button.pack(side="left")
 
 
 
@@ -874,6 +1235,13 @@ def select_word(event):
 
 def auto_suggest(event=None):
     highlight_words()
+    highlight_variables()
+    highlight_numbers()
+    highlight_strings()
+    highlight_symbols()
+    update_dir_list()
+    update_cursor_position()
+    
     global popup, suggestions, current_word_start
 
     if event and event.keysym in ("Escape", "Return", "Up", "Down", "Tab"):
@@ -899,7 +1267,7 @@ def auto_suggest(event=None):
     current_word_start = f"{cursor_position} - {len(current_word)} chars"
 
     matches = [
-        item for item in all_words
+        item for item in all_words + dir_list
         if item.lower().startswith(current_word.lower())
         and item.lower() != current_word.lower()
     ]
@@ -915,10 +1283,10 @@ def auto_suggest(event=None):
         suggestions = tk.Listbox(
             popup,
             width=20,
-            height=10,
-            bg="#111122",
-            fg="lightgrey",
-            font=("Courier New", 10),
+            height=15,
+            bg="#204157",
+            fg="white",
+            font=("Courier New", 9),
             exportselection=False
         )
         suggestions.pack()
@@ -944,6 +1312,8 @@ def auto_suggest(event=None):
 
         popup.geometry(f"+{x}+{y}")
         popup.lift()
+        
+
 
 
 
@@ -969,6 +1339,8 @@ except:
 editor.bind("<KeyRelease>", auto_suggest)
 
 editor.bind("<Return>", auto_indent)
+
+editor.bind("<Button-1>", lambda x: (highlight_words(), update_cursor_position()))
 
 
 result_window.bind("<Return>", auto_indent)
