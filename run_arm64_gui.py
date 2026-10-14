@@ -1035,7 +1035,7 @@ def run_python():
             editor.delete(1.0, "end")
             editor.insert(1.0, output.getvalue())
 
-
+last_file_opened = ""
 
 def open_file():
     global last_file_opened
