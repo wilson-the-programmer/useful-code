@@ -1,63 +1,60 @@
+
 #include <QApplication>
+#include <QTabWidget>
 #include <qtermwidget6/qtermwidget.h>
-#include <QRandomGenerator>
-#include <vector>
+#include <QFont>
+#include <QStringList>
 
-QString randScheme()
+QStringList color_schemes = {
+    "BlackOnLightYellow",
+    "BlackOnRandomLight",
+    "BlackOnWhite",
+    "BreezeModified",
+    "DarkPastels",
+    "Falcon",
+    "GreenOnBlack",
+    "Linux",
+    "Nord",
+    "Solarized",
+    "SolarizedLight",
+    "Tango",
+    "Ubuntu",
+    "WhiteOnWhite"
+};
+
+QString my_scheme = "Falcon";
+
+QTermWidget *createTerminal()
 {
-    std::vector<QString> schemes = {
-        "BlackOnLightYellow",
-        "BlackOnRandomLight",
-        "BlackOnWhite",
-        "BreezeModified",
-        "DarkPastels",
-        "Falcon",
-        "GreenOnBlack",
-        "Linux",
-        "Nord",
-        "Solarized",
-        "SolarizedLight",
-        "Tango",
-        "Ubuntu",
-        "WhiteOnWhite"
-    };
+    QTermWidget *terminal = new QTermWidget();
 
-    int index = QRandomGenerator::global()->bounded(static_cast<int>(schemes.size()));
+    terminal->setShellProgram("/bin/bash");
+    terminal->setColorScheme(my_scheme);
+    terminal->setTerminalFont(QFont("Monospace", 12));
 
-    return schemes[index];
+    return terminal;
 }
-
-
-
-//QString my_scheme = randScheme();
-
-
-QString my_scheme = "Linux";
-
-
-//terminal->setColorScheme(my_scheme);
-
-
-
-
 
 int main(int argc, char *argv[])
 {
-
     QApplication app(argc, argv);
 
-    QTermWidget terminal;
+    QTabWidget tabs;
 
-    terminal.setShellProgram("/bin/bash");
-    terminal.setColorScheme(my_scheme);
-    terminal.setTerminalFont(QFont("Monospace", 12));
-    //terminal.sendText("Terminal Scheme: " + my_scheme + "\n");
+    tabs.addTab(createTerminal(), "Shell 1");
+    tabs.addTab(createTerminal(), "Shell 2");
+    tabs.addTab(createTerminal(), "Shell 3");
 
-    terminal.resize(800, 650);
+    tabs.setWindowTitle("My Qt Terminal");
+    tabs.setTabPosition(QTabWidget::North);
+    tabs.setMovable(true);
+    tabs.setDocumentMode(true);
 
-    terminal.show();
+    tabs.resize(800, 650);
+    tabs.move(100, 100);
+
+    tabs.show();
 
     return app.exec();
-
 }
 
