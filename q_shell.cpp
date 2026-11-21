@@ -12,10 +12,7 @@ sudo apt install build-essential qt6-base-dev libqtermwidget6-2-dev pkg-config
 
 
 
-
-
-
-
+// Useful Shell App
 
 
 #include <QApplication>
