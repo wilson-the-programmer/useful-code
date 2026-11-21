@@ -1,11 +1,12 @@
-#!/bin/bash
+echo ""
 
-qt6_app="$1"
+read -p "C++ Qt6: " qt6_file
 
-exeF="${qt6_app%.cpp}"
+exeF="${qt6_file%.cpp}"
 
-g++ "$qt6_app" -o "$exeF" $(pkg-config --cflags --libs Qt6Widgets) -lqtermwidget6
+g++ "$qt6_file" -o "$exeF" $(pkg-config --cflags --libs Qt6Widgets) -lqtermwidget6
 
 if [ $? -eq 0 ]; then
-    ./"$exeF"
+./"$exeF"
 fi
+
