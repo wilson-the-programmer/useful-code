@@ -1,3 +1,22 @@
+/*
+
+Note:
+
+
+you may need to do:
+
+sudo apt install build-essential qt6-base-dev libqtermwidget6-2-dev pkg-config
+
+*/
+
+
+
+
+
+
+
+
+
 
 #include <QApplication>
 #include <QTabWidget>
